@@ -97,6 +97,56 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  .light {
+    /* Profilum light — warm ivory, deep ink, gold preserved */
+    --background: 39 40% 97%;          /* #FAF6EE warm ivory */
+    --foreground: 30 18% 12%;          /* deep warm ink */
+
+    --surface: 39 35% 94%;             /* slightly deeper ivory */
+    --surface-2: 39 30% 90%;
+
+    --card: 39 35% 96%;
+    --card-foreground: 30 18% 12%;
+
+    --popover: 39 35% 96%;
+    --popover-foreground: 30 18% 12%;
+
+    --primary: 41 60% 42%;             /* darker gold for contrast on light */
+    --primary-foreground: 39 40% 97%;
+
+    --gold: 41 60% 42%;
+    --gold-light: 43 70% 52%;
+
+    --secondary: 39 30% 90%;
+    --secondary-foreground: 30 18% 12%;
+
+    --muted: 39 30% 90%;
+    --muted-foreground: 30 12% 38%;
+
+    --accent: 41 60% 42%;
+    --accent-foreground: 39 40% 97%;
+
+    --destructive: 0 65% 45%;
+    --destructive-foreground: 39 40% 97%;
+
+    --success: 138 39% 38%;
+
+    --border: 41 60% 42% / 0.22;
+    --border-strong: 41 60% 42% / 0.45;
+    --border-subtle: 30 18% 12% / 0.10;
+    --input: 39 30% 90%;
+    --ring: 41 60% 42%;
+
+    --sidebar-background: 39 40% 97%;
+    --sidebar-foreground: 30 18% 12%;
+    --sidebar-primary: 41 60% 42%;
+    --sidebar-primary-foreground: 39 40% 97%;
+    --sidebar-accent: 39 30% 90%;
+    --sidebar-accent-foreground: 30 18% 12%;
+    --sidebar-border: 30 18% 12% / 0.10;
+    --sidebar-ring: 41 60% 42%;
+  }
 }
 
 @layer base {
@@ -127,9 +177,9 @@
   .bg-surface { background-color: hsl(var(--surface)); }
   .bg-surface-2 { background-color: hsl(var(--surface-2)); }
   .border-gold { border-color: hsl(var(--gold) / 0.4); }
-  .border-subtle { border-color: hsl(var(--foreground) / 0.07); }
-  .text-dim { color: hsl(var(--foreground) / 0.6); }
-  .text-muted-soft { color: hsl(var(--foreground) / 0.32); }
+  .border-subtle { border-color: hsl(var(--foreground) / 0.10); }
+  .text-dim { color: hsl(var(--foreground) / 0.65); }
+  .text-muted-soft { color: hsl(var(--foreground) / 0.40); }
   .gradient-gold {
     background: linear-gradient(135deg, hsl(var(--gold)), hsl(var(--gold-light)));
   }
