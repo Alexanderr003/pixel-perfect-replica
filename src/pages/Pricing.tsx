@@ -11,10 +11,10 @@ const plans = (billing: Billing) => [
   {
     name: "Starter",
     tagline: "Try the experience.",
-    price: "$2",
+    price: "$1.99",
     sub: "one-time",
     features: ["1 CV", "4 Core templates", "PDF download", "Basic AI rewrite"],
-    cta: "Start with $2",
+    cta: "Start with $1.99",
   },
   {
     name: "Pro",
