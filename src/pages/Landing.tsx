@@ -15,7 +15,7 @@ const templates = [
 ];
 
 const plans = [
-  { name: "Starter", price: "$2", sub: "one-time", features: ["1 CV", "4 Core templates", "PDF download"], cta: "Get started" },
+  { name: "Starter", price: "$1.99", sub: "one-time", features: ["1 CV", "4 Core templates", "PDF download"], cta: "Get started" },
   { name: "Pro", price: "$9", sub: "per month", features: ["Unlimited CVs", "9 templates", "Cover letter & LinkedIn bio", "Job match dashboard"], cta: "Go Pro", featured: true },
   { name: "Elite", price: "$19", sub: "per month", features: ["Everything in Pro", "All 12 templates", "AI headshot", "Priority support"], cta: "Go Elite" },
   { name: "Own a template", price: "$12", sub: "one-time", features: ["1 template forever", "Unlimited uses", "All future updates"], cta: "Buy template" },
@@ -54,7 +54,7 @@ const Landing = () => {
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <Button variant="hero" size="xl" asChild>
                 <Link to="/builder">
-                  Build my CV — from $2 <ArrowRight className="ml-1" />
+                  Build my CV — from $1.99 <ArrowRight className="ml-1" />
                 </Link>
               </Button>
               <Button variant="ghost" size="xl" className="text-dim" asChild>
@@ -171,7 +171,7 @@ const Landing = () => {
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs uppercase tracking-[0.25em] text-gold">Pricing</span>
           <h2 className="mt-4 font-serif text-4xl md:text-5xl">Pay for what you actually need.</h2>
-          <p className="mt-4 text-dim">Start at two dollars. Own a template forever for twelve. Or go unlimited.</p>
+          <p className="mt-4 text-dim">Start at $1.99. Own a template forever for twelve. Or go unlimited.</p>
         </div>
 
         <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -234,7 +234,7 @@ const Landing = () => {
         <div className="mt-24 rounded-md border border-gold/30 bg-surface p-12 md:p-16 text-center glow-gold">
           <h2 className="font-serif text-4xl md:text-5xl">Begin your next chapter.</h2>
           <p className="mt-4 text-dim max-w-md mx-auto">
-            Two dollars for your first CV. No subscription. No credit card surprises.
+            $1.99 for your first CV. No subscription. No credit card surprises.
           </p>
           <Button variant="hero" size="xl" className="mt-10" asChild>
             <Link to="/builder">Build my CV <ArrowRight className="ml-1" /></Link>
