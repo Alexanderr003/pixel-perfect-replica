@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "./ThemeToggle";
 
 const links = [
   { to: "/", label: "Home" },
@@ -31,6 +32,7 @@ export const Nav = () => {
           ))}
         </nav>
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <Button variant="ghost" size="sm" className="text-dim hover:text-foreground" asChild>
             <Link to="/login">Sign in</Link>
           </Button>
