@@ -10,7 +10,9 @@ import { Nav } from "@/components/site/Nav";
 import { Footer } from "@/components/site/Footer";
 import { useAuth } from "@/components/site/AuthProvider";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Check, Loader2, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Eye, Loader2, Plus, Trash2 } from "lucide-react";
+import { CvPreview } from "@/components/cv/CvPreview";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 type Experience = { id: string; role: string; company: string; period: string; description: string };
 type Education = { id: string; degree: string; school: string; period: string };
@@ -150,9 +152,9 @@ const Builder = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Nav />
-      <section className="container max-w-4xl py-12 md:py-16">
+      <section className="container py-10 md:py-14">
         {/* Stepper */}
-        <div className="mb-10">
+        <div className="mb-8 max-w-4xl">
           <div className="flex items-center justify-between text-xs uppercase tracking-widest text-dim">
             <span>Step {step + 1} of {steps.length}</span>
             <span className="text-gold">{steps[step]}</span>
@@ -183,9 +185,25 @@ const Builder = () => {
           </div>
         </div>
 
-        <h1 className="font-serif text-4xl text-foreground md:text-5xl">{steps[step]}</h1>
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+          {/* LEFT — form column */}
+          <div>
+            <div className="flex items-center justify-between gap-4">
+              <h1 className="font-serif text-4xl text-foreground md:text-5xl">{steps[step]}</h1>
+              {/* Mobile preview trigger */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="goldOutline" size="sm" className="lg:hidden">
+                    <Eye className="mr-2 h-4 w-4" /> Preview
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-full overflow-auto bg-background p-4 sm:max-w-xl">
+                  <PreviewPane data={data} />
+                </SheetContent>
+              </Sheet>
+            </div>
 
-        <div className="mt-8 rounded-lg border border-subtle bg-surface p-6 md:p-8">
+            <div className="mt-6 rounded-lg border border-subtle bg-surface p-6 md:p-8">
           {step === 0 && (
             <div className="grid gap-5 md:grid-cols-2">
               <Field label="Full name *" id="fullName">
