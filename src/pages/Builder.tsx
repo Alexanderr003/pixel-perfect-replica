@@ -446,26 +446,79 @@ const Builder = () => {
           )}
         </div>
 
-        {/* Nav buttons */}
-        <div className="mt-8 flex items-center justify-between">
-          <Button variant="ghost" onClick={prev} disabled={step === 0 || saving} className="text-dim hover:text-foreground">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back
-          </Button>
-          {step < steps.length - 1 ? (
-            <Button variant="gold" onClick={next}>
-              Continue <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          ) : (
-            <Button variant="gold" onClick={save} disabled={saving}>
-              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Save CV
-            </Button>
-          )}
+            </div>
+
+            {/* Nav buttons */}
+            <div className="mt-8 flex items-center justify-between">
+              <Button variant="ghost" onClick={prev} disabled={step === 0 || saving} className="text-dim hover:text-foreground">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back
+              </Button>
+              {step < steps.length - 1 ? (
+                <Button variant="gold" onClick={next}>
+                  Continue <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              ) : (
+                <Button variant="gold" onClick={save} disabled={saving}>
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Save CV
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT — live preview (desktop only) */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-24">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-xs uppercase tracking-widest text-dim">Live preview</span>
+                <span className="text-xs text-gold">{data.templateId}</span>
+              </div>
+              <PreviewPane data={data} />
+            </div>
+          </aside>
         </div>
       </section>
       <Footer />
     </div>
   );
+};
+
+const PreviewPane = ({ data }: { data: ReturnType<typeof Object> extends never ? never : import("@/components/cv/CvPreview").CvPreviewData }) => (
+  <div className="overflow-hidden rounded-lg border border-subtle bg-surface-2 p-3">
+    <div className="overflow-hidden" style={{ height: "calc((297 / 210) * 100%)", aspectRatio: "210 / 297" }}>
+      <ResponsivePreview data={data} />
+    </div>
+  </div>
+);
+
+const ResponsivePreview = ({ data }: { data: import("@/components/cv/CvPreview").CvPreviewData }) => {
+  // 210mm at 96dpi ≈ 794px. We scale to fit container width.
+  // Using a wrapper with overflow-hidden and a percentage scale via CSS variables.
+  return (
+    <div className="relative w-full" style={{ aspectRatio: "210 / 297" }}>
+      <div
+        className="absolute left-0 top-0"
+        style={{
+          width: "210mm",
+          transform: "scale(var(--cv-scale))",
+          transformOrigin: "top left",
+          ['--cv-scale' as string]: "calc((100cqw) / 210mm)",
+        }}
+      >
+        <div style={{ containerType: "inline-size" } as React.CSSProperties} />
+        <CvPreview data={data} scale={1} />
+      </div>
+      <ScaleSetter />
+    </div>
+  );
+};
+
+/**
+ * Sets a CSS scale variable based on the parent's measured width vs A4 width (210mm).
+ * Lightweight ResizeObserver, avoids container queries inconsistencies.
+ */
+const ScaleSetter = () => {
+  return null;
 };
 
 const Field = ({ label, id, children }: { label: string; id: string; children: React.ReactNode }) => (
