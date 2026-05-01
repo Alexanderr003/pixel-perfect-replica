@@ -477,7 +477,6 @@ const Builder = () => {
               </div>
               <PreviewPane data={data} />
             </div>
-            </div>
           </aside>
         </div>
       </section>
