@@ -448,8 +448,6 @@ const Builder = () => {
           )}
         </div>
 
-            </div>
-
             {/* Nav buttons */}
             <div className="mt-8 flex items-center justify-between">
               <Button variant="ghost" onClick={prev} disabled={step === 0 || saving} className="text-dim hover:text-foreground">
