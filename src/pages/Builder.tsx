@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +11,10 @@ import { Nav } from "@/components/site/Nav";
 import { Footer } from "@/components/site/Footer";
 import { useAuth } from "@/components/site/AuthProvider";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Check, Loader2, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Eye, Loader2, Plus, Trash2 } from "lucide-react";
+import { CvPreview } from "@/components/cv/CvPreview";
+import type { CvPreviewData } from "@/components/cv/CvPreview";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 type Experience = { id: string; role: string; company: string; period: string; description: string };
 type Education = { id: string; degree: string; school: string; period: string };
@@ -139,7 +143,7 @@ const Builder = () => {
       ]);
       if (error) throw error;
       toast.success("CV saved.");
-      navigate("/");
+      navigate("/dashboard");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save");
     } finally {
@@ -150,9 +154,9 @@ const Builder = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Nav />
-      <section className="container max-w-4xl py-12 md:py-16">
+      <section className="container py-10 md:py-14">
         {/* Stepper */}
-        <div className="mb-10">
+        <div className="mb-8 max-w-4xl">
           <div className="flex items-center justify-between text-xs uppercase tracking-widest text-dim">
             <span>Step {step + 1} of {steps.length}</span>
             <span className="text-gold">{steps[step]}</span>
@@ -183,9 +187,25 @@ const Builder = () => {
           </div>
         </div>
 
-        <h1 className="font-serif text-4xl text-foreground md:text-5xl">{steps[step]}</h1>
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+          {/* LEFT — form column */}
+          <div>
+            <div className="flex items-center justify-between gap-4">
+              <h1 className="font-serif text-4xl text-foreground md:text-5xl">{steps[step]}</h1>
+              {/* Mobile preview trigger */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="goldOutline" size="sm" className="lg:hidden">
+                    <Eye className="mr-2 h-4 w-4" /> Preview
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-full overflow-auto bg-background p-4 sm:max-w-xl">
+                  <PreviewPane data={data} />
+                </SheetContent>
+              </Sheet>
+            </div>
 
-        <div className="mt-8 rounded-lg border border-subtle bg-surface p-6 md:p-8">
+            <div className="mt-6 rounded-lg border border-subtle bg-surface p-6 md:p-8">
           {step === 0 && (
             <div className="grid gap-5 md:grid-cols-2">
               <Field label="Full name *" id="fullName">
@@ -428,24 +448,72 @@ const Builder = () => {
           )}
         </div>
 
-        {/* Nav buttons */}
-        <div className="mt-8 flex items-center justify-between">
-          <Button variant="ghost" onClick={prev} disabled={step === 0 || saving} className="text-dim hover:text-foreground">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back
-          </Button>
-          {step < steps.length - 1 ? (
-            <Button variant="gold" onClick={next}>
-              Continue <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          ) : (
-            <Button variant="gold" onClick={save} disabled={saving}>
-              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Save CV
-            </Button>
-          )}
+            {/* Nav buttons */}
+            <div className="mt-8 flex items-center justify-between">
+              <Button variant="ghost" onClick={prev} disabled={step === 0 || saving} className="text-dim hover:text-foreground">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back
+              </Button>
+              {step < steps.length - 1 ? (
+                <Button variant="gold" onClick={next}>
+                  Continue <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              ) : (
+                <Button variant="gold" onClick={save} disabled={saving}>
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Save CV
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT — live preview (desktop only) */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-24">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-xs uppercase tracking-widest text-dim">Live preview</span>
+                <span className="text-xs text-gold">{data.templateId}</span>
+              </div>
+              <PreviewPane data={data} />
+            </div>
+          </aside>
         </div>
       </section>
       <Footer />
+    </div>
+  );
+};
+
+const A4_WIDTH_PX = 794; // 210mm @ 96dpi
+const A4_HEIGHT_PX = 1123; // 297mm @ 96dpi
+
+const PreviewPane = ({ data }: { data: CvPreviewData }) => {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.5);
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const update = () => {
+      const w = el.clientWidth;
+      setScale(w / A4_WIDTH_PX);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-subtle bg-surface-2 p-3">
+      <div
+        ref={wrapRef}
+        className="relative w-full overflow-hidden bg-background/40"
+        style={{ height: A4_HEIGHT_PX * scale }}
+      >
+        <div className="absolute left-0 top-0">
+          <CvPreview data={data} scale={scale} />
+        </div>
+      </div>
     </div>
   );
 };
