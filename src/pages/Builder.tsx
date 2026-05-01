@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -483,42 +484,39 @@ const Builder = () => {
   );
 };
 
-const PreviewPane = ({ data }: { data: ReturnType<typeof Object> extends never ? never : import("@/components/cv/CvPreview").CvPreviewData }) => (
-  <div className="overflow-hidden rounded-lg border border-subtle bg-surface-2 p-3">
-    <div className="overflow-hidden" style={{ height: "calc((297 / 210) * 100%)", aspectRatio: "210 / 297" }}>
-      <ResponsivePreview data={data} />
-    </div>
-  </div>
-);
+const A4_WIDTH_PX = 794; // 210mm @ 96dpi
+const A4_HEIGHT_PX = 1123; // 297mm @ 96dpi
 
-const ResponsivePreview = ({ data }: { data: import("@/components/cv/CvPreview").CvPreviewData }) => {
-  // 210mm at 96dpi ≈ 794px. We scale to fit container width.
-  // Using a wrapper with overflow-hidden and a percentage scale via CSS variables.
+const PreviewPane = ({ data }: { data: import("@/components/cv/CvPreview").CvPreviewData }) => {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.5);
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const update = () => {
+      const w = el.clientWidth;
+      setScale(w / A4_WIDTH_PX);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   return (
-    <div className="relative w-full" style={{ aspectRatio: "210 / 297" }}>
+    <div className="overflow-hidden rounded-lg border border-subtle bg-surface-2 p-3">
       <div
-        className="absolute left-0 top-0"
-        style={{
-          width: "210mm",
-          transform: "scale(var(--cv-scale))",
-          transformOrigin: "top left",
-          ['--cv-scale' as string]: "calc((100cqw) / 210mm)",
-        }}
+        ref={wrapRef}
+        className="relative w-full overflow-hidden bg-background/40"
+        style={{ height: A4_HEIGHT_PX * scale }}
       >
-        <div style={{ containerType: "inline-size" } as React.CSSProperties} />
-        <CvPreview data={data} scale={1} />
+        <div className="absolute left-0 top-0">
+          <CvPreview data={data} scale={scale} />
+        </div>
       </div>
-      <ScaleSetter />
     </div>
   );
-};
-
-/**
- * Sets a CSS scale variable based on the parent's measured width vs A4 width (210mm).
- * Lightweight ResizeObserver, avoids container queries inconsistencies.
- */
-const ScaleSetter = () => {
-  return null;
 };
 
 const Field = ({ label, id, children }: { label: string; id: string; children: React.ReactNode }) => (
