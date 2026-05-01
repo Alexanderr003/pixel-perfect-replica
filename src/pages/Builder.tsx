@@ -134,7 +134,7 @@ const Builder = () => {
           user_id: user.id,
           title,
           template_id: data.templateId,
-          data: data as unknown as Record<string, unknown>,
+          data: JSON.parse(JSON.stringify(data)),
         },
       ]);
       if (error) throw error;
