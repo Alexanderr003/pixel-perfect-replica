@@ -143,7 +143,7 @@ const Builder = () => {
       ]);
       if (error) throw error;
       toast.success("CV saved.");
-      navigate("/");
+      navigate("/dashboard");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save");
     } finally {
