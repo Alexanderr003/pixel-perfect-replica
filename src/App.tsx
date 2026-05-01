@@ -8,6 +8,7 @@ import Pricing from "./pages/Pricing.tsx";
 import Templates from "./pages/Templates.tsx";
 import Auth from "./pages/Auth.tsx";
 import Builder from "./pages/Builder.tsx";
+import Dashboard from "./pages/Dashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { ThemeProvider } from "./components/site/ThemeProvider";
 import { AuthProvider } from "./components/site/AuthProvider";
@@ -34,6 +35,14 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <Builder />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <RequireAuth>
+                    <Dashboard />
                   </RequireAuth>
                 }
               />

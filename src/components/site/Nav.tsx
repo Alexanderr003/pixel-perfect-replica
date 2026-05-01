@@ -10,6 +10,12 @@ const links = [
   { to: "/templates", label: "Templates" },
 ];
 
+const authedLinks = [
+  { to: "/dashboard", label: "My CVs" },
+  { to: "/pricing", label: "Pricing" },
+  { to: "/templates", label: "Templates" },
+];
+
 export const Nav = () => {
   const { pathname } = useLocation();
   const { user, signOut } = useAuth();
@@ -22,7 +28,7 @@ export const Nav = () => {
           </span>
         </Link>
         <nav className="hidden items-center gap-8 md:flex">
-          {links.map((l) => (
+          {(user ? authedLinks : links).map((l) => (
             <Link
               key={l.to}
               to={l.to}
