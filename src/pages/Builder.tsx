@@ -13,6 +13,7 @@ import { useAuth } from "@/components/site/AuthProvider";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Check, Eye, Loader2, Plus, Trash2 } from "lucide-react";
 import { CvPreview } from "@/components/cv/CvPreview";
+import type { CvPreviewData } from "@/components/cv/CvPreview";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 type Experience = { id: string; role: string; company: string; period: string; description: string };
@@ -487,7 +488,7 @@ const Builder = () => {
 const A4_WIDTH_PX = 794; // 210mm @ 96dpi
 const A4_HEIGHT_PX = 1123; // 297mm @ 96dpi
 
-const PreviewPane = ({ data }: { data: import("@/components/cv/CvPreview").CvPreviewData }) => {
+const PreviewPane = ({ data }: { data: CvPreviewData }) => {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.5);
 
