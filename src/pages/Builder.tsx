@@ -129,12 +129,14 @@ const Builder = () => {
     setSaving(true);
     try {
       const title = data.basics.fullName ? `${data.basics.fullName} — CV` : "Untitled CV";
-      const { error } = await supabase.from("cvs").insert({
-        user_id: user.id,
-        title,
-        template_id: data.templateId,
-        data: data as unknown as Record<string, unknown>,
-      });
+      const { error } = await supabase.from("cvs").insert([
+        {
+          user_id: user.id,
+          title,
+          template_id: data.templateId,
+          data: data as unknown as Record<string, unknown>,
+        },
+      ]);
       if (error) throw error;
       toast.success("CV saved.");
       navigate("/");

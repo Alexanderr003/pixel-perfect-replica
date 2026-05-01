@@ -1,6 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
+import { useAuth } from "./AuthProvider";
+import { LogOut } from "lucide-react";
 
 const links = [
   { to: "/", label: "Home" },
@@ -10,6 +12,7 @@ const links = [
 
 export const Nav = () => {
   const { pathname } = useLocation();
+  const { user, signOut } = useAuth();
   return (
     <header className="sticky top-0 z-50 border-b border-subtle bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
@@ -33,12 +36,25 @@ export const Nav = () => {
         </nav>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Button variant="ghost" size="sm" className="text-dim hover:text-foreground" asChild>
-            <Link to="/login">Sign in</Link>
-          </Button>
-          <Button variant="gold" size="sm" asChild>
-            <Link to="/builder">Build my CV</Link>
-          </Button>
+          {user ? (
+            <>
+              <Button variant="ghost" size="sm" className="text-dim hover:text-foreground" onClick={signOut}>
+                <LogOut className="mr-1.5 h-4 w-4" /> Sign out
+              </Button>
+              <Button variant="gold" size="sm" asChild>
+                <Link to="/builder">Build my CV</Link>
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" className="text-dim hover:text-foreground" asChild>
+                <Link to="/auth">Sign in</Link>
+              </Button>
+              <Button variant="gold" size="sm" asChild>
+                <Link to="/builder">Build my CV</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>
