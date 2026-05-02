@@ -8,9 +8,10 @@ interface Props {
   customerEmail?: string;
   userId?: string;
   returnUrl?: string;
+  metadata?: Record<string, string>;
 }
 
-export function StripeEmbeddedCheckout({ priceId, quantity, customerEmail, userId, returnUrl }: Props) {
+export function StripeEmbeddedCheckout({ priceId, quantity, customerEmail, userId, returnUrl, metadata }: Props) {
   const fetchClientSecret = async (): Promise<string> => {
     const finalReturnUrl =
       returnUrl ?? `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`;
@@ -22,6 +23,7 @@ export function StripeEmbeddedCheckout({ priceId, quantity, customerEmail, userI
         userId,
         returnUrl: finalReturnUrl,
         environment: getStripeEnvironment(),
+        metadata,
       },
     });
     if (error || !data?.clientSecret) {

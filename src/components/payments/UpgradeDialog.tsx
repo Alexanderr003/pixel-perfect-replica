@@ -48,7 +48,12 @@ export function UpgradeDialog({ open, onOpenChange, reason, templateId }: Props)
   const buyTemplate = () => {
     if (!user) { navigate("/auth?mode=signup"); return; }
     onOpenChange(false);
-    openCheckout({ priceId: "premium_template", customerEmail: user.email ?? undefined, userId: user.id });
+    openCheckout({
+      priceId: "premium_template",
+      customerEmail: user.email ?? undefined,
+      userId: user.id,
+      metadata: templateId ? { templateId } : undefined,
+    });
   };
 
   return (
