@@ -58,7 +58,10 @@ export function useSubscription() {
     (((sub.status === "active" || sub.status === "trialing" || sub.status === "past_due") &&
       (periodEnd === null || periodEnd > now)) ||
       (sub.status === "canceled" && periodEnd !== null && periodEnd > now));
-  const isPro = isActive && (sub?.price_id === "pro_monthly" || sub?.price_id === "pro_yearly");
+  const PRO_IDS = new Set(["pro_monthly", "pro_yearly", "elite_monthly", "elite_yearly"]);
+  const ELITE_IDS = new Set(["elite_monthly", "elite_yearly"]);
+  const isPro = isActive && !!sub?.price_id && PRO_IDS.has(sub.price_id);
+  const isElite = isActive && !!sub?.price_id && ELITE_IDS.has(sub.price_id);
 
-  return { sub, isActive, isPro, loading, refetch };
+  return { sub, isActive, isPro, isElite, loading, refetch };
 }
