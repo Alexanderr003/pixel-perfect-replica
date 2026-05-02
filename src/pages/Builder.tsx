@@ -558,22 +558,36 @@ const Builder = () => {
               <div className="mt-6 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {templates.map((t) => {
                   const active = data.templateId === t.id;
+                  const locked = isPremiumTemplate(t.id) && !isPro && !ownedTemplates.has(t.id);
                   return (
                     <button
                       key={t.id}
                       type="button"
-                      onClick={() => setData({ ...data, templateId: t.id })}
+                      onClick={() => {
+                        if (locked) {
+                          setUpgradeReason("premium_template");
+                          setUpgradeTpl(t.id);
+                          setUpgradeOpen(true);
+                          return;
+                        }
+                        setData({ ...data, templateId: t.id });
+                      }}
                       className={`group relative rounded-lg border p-5 text-left transition-all ${
                         active ? "border-gold bg-surface-2 shadow-glow" : "border-subtle bg-surface hover:border-gold/50"
                       }`}
                     >
+                      {locked && (
+                        <div className="absolute right-3 top-3 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full bg-background/80 text-gold border border-gold/40">
+                          <Lock className="h-3 w-3" />
+                        </div>
+                      )}
                       <div className="flex aspect-[3/4] items-center justify-center rounded-md bg-background/60">
                         <span className="font-serif text-4xl text-gold/60">{t.name[0]}</span>
                       </div>
                       <div className="mt-4 flex items-center justify-between">
                         <div>
                           <p className="font-serif text-lg text-foreground">{t.name}</p>
-                          <p className="text-xs uppercase tracking-widest text-dim">{t.line}</p>
+                          <p className="text-xs uppercase tracking-widest text-dim">{t.line}{locked ? " · Pro" : ""}</p>
                         </div>
                         {active && (
                           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gold">
@@ -621,6 +635,12 @@ const Builder = () => {
         </>)}
       </section>
       <Footer />
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        reason={upgradeReason}
+        templateId={upgradeTpl}
+      />
     </div>
   );
 };
