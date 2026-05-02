@@ -49,7 +49,7 @@ export function UpgradeDialog({ open, onOpenChange, reason, templateId }: Props)
     if (!user) { navigate("/auth?mode=signup"); return; }
     onOpenChange(false);
     openCheckout({
-      priceId: "premium_template",
+      priceId: "premium_template_one_time",
       customerEmail: user.email ?? undefined,
       userId: user.id,
       metadata: templateId ? { templateId } : undefined,

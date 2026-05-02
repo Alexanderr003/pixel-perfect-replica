@@ -18,6 +18,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { downloadCvPdf } from "@/lib/pdf";
 import { useEntitlements, isPremiumTemplate } from "@/hooks/useEntitlements";
 import { UpgradeDialog } from "@/components/payments/UpgradeDialog";
+import { PreviewWatermark } from "@/components/payments/PreviewWatermark";
 import { Lock } from "lucide-react";
 
 type Experience = { id: string; role: string; company: string; period: string; description: string };
@@ -74,9 +75,9 @@ const Builder = () => {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState<boolean>(!!initialId);
   const [downloading, setDownloading] = useState(false);
-  const { isPro, canUseTemplate, ownedTemplates } = useEntitlements();
+  const { isPro, canUseTemplate, canCreateNewCv, ownedTemplates } = useEntitlements();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [upgradeReason, setUpgradeReason] = useState<"premium_template" | "watermark">("premium_template");
+  const [upgradeReason, setUpgradeReason] = useState<"premium_template" | "watermark" | "cv_limit">("premium_template");
   const [upgradeTpl, setUpgradeTpl] = useState<string | undefined>();
   // Autosave state
   const cvIdRef = useRef<string | null>(initialId);
@@ -146,6 +147,13 @@ const Builder = () => {
 
   const runAutosave = async () => {
     if (!user) return;
+    // Free plan: do not silently create a 2nd CV via autosave
+    if (!cvIdRef.current && !canCreateNewCv) {
+      setAutoStatus("idle");
+      setUpgradeReason("cv_limit");
+      setUpgradeOpen(true);
+      return;
+    }
     if (inFlightRef.current) {
       pendingRef.current = true;
       return;
@@ -235,6 +243,11 @@ const Builder = () => {
 
   const save = async () => {
     if (!user) return;
+    if (!cvIdRef.current && !canCreateNewCv) {
+      setUpgradeReason("cv_limit");
+      setUpgradeOpen(true);
+      return;
+    }
     setSaving(true);
     try {
       const title = data.basics.fullName ? `${data.basics.fullName} — CV` : "Untitled CV";
@@ -340,7 +353,7 @@ const Builder = () => {
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="right" className="w-full overflow-auto bg-background p-4 sm:max-w-xl">
-                    <PreviewPane data={data} />
+                    <PreviewPane data={data} showWatermark={!isPro} />
                   </SheetContent>
                 </Sheet>
               </div>
@@ -628,7 +641,7 @@ const Builder = () => {
                 <span className="text-xs uppercase tracking-widest text-dim">Live preview</span>
                 <span className="text-xs text-gold">{data.templateId}</span>
               </div>
-              <PreviewPane data={data} />
+              <PreviewPane data={data} showWatermark={!isPro} />
             </div>
           </aside>
         </div>
@@ -648,7 +661,7 @@ const Builder = () => {
 const A4_WIDTH_PX = 794; // 210mm @ 96dpi
 const A4_HEIGHT_PX = 1123; // 297mm @ 96dpi
 
-const PreviewPane = ({ data }: { data: CvPreviewData }) => {
+const PreviewPane = ({ data, showWatermark }: { data: CvPreviewData; showWatermark: boolean }) => {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.5);
 
@@ -675,6 +688,7 @@ const PreviewPane = ({ data }: { data: CvPreviewData }) => {
         <div className="absolute left-0 top-0">
           <CvPreview data={data} scale={scale} />
         </div>
+        <PreviewWatermark show={showWatermark} size="lg" />
       </div>
     </div>
   );

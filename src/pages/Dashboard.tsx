@@ -14,6 +14,7 @@ import { useEntitlements } from "@/hooks/useEntitlements";
 import { useSubscription } from "@/hooks/useSubscription";
 import { UpgradeDialog } from "@/components/payments/UpgradeDialog";
 import { getStripeEnvironment } from "@/lib/stripe";
+import { PreviewWatermark } from "@/components/payments/PreviewWatermark";
 
 type CvRow = {
   id: string;
@@ -185,6 +186,7 @@ const CvCard = ({ cv, onDelete, isPro }: { cv: CvRow; onDelete: () => void; isPr
         style={{ aspectRatio: "210 / 297" }}
       >
         <ThumbPreview data={data} />
+        <PreviewWatermark show={!isPro} size="sm" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
       </div>
       {/* Meta */}
