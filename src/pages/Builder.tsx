@@ -16,6 +16,9 @@ import { CvPreview } from "@/components/cv/CvPreview";
 import type { CvPreviewData } from "@/components/cv/CvPreview";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { downloadCvPdf } from "@/lib/pdf";
+import { useEntitlements, isPremiumTemplate } from "@/hooks/useEntitlements";
+import { UpgradeDialog } from "@/components/payments/UpgradeDialog";
+import { Lock } from "lucide-react";
 
 type Experience = { id: string; role: string; company: string; period: string; description: string };
 type Education = { id: string; degree: string; school: string; period: string };
@@ -71,6 +74,10 @@ const Builder = () => {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState<boolean>(!!initialId);
   const [downloading, setDownloading] = useState(false);
+  const { isPro, canUseTemplate, ownedTemplates } = useEntitlements();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState<"premium_template" | "watermark">("premium_template");
+  const [upgradeTpl, setUpgradeTpl] = useState<string | undefined>();
   // Autosave state
   const cvIdRef = useRef<string | null>(initialId);
   const [autoStatus, setAutoStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -258,7 +265,13 @@ const Builder = () => {
     setDownloading(true);
     try {
       const safe = (data.basics.fullName || "cv").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      await downloadCvPdf(data, `${safe || "cv"}.pdf`);
+      await downloadCvPdf(data, `${safe || "cv"}.pdf`, { watermark: !isPro });
+      if (!isPro) {
+        toast.message("Watermark on Free plan", {
+          description: "Upgrade to Pro to remove it.",
+          action: { label: "Go Pro", onClick: () => { setUpgradeReason("watermark"); setUpgradeOpen(true); } },
+        });
+      }
     } catch (err) {
       toast.error("Could not generate PDF");
     } finally {
@@ -545,22 +558,36 @@ const Builder = () => {
               <div className="mt-6 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {templates.map((t) => {
                   const active = data.templateId === t.id;
+                  const locked = isPremiumTemplate(t.id) && !isPro && !ownedTemplates.has(t.id);
                   return (
                     <button
                       key={t.id}
                       type="button"
-                      onClick={() => setData({ ...data, templateId: t.id })}
+                      onClick={() => {
+                        if (locked) {
+                          setUpgradeReason("premium_template");
+                          setUpgradeTpl(t.id);
+                          setUpgradeOpen(true);
+                          return;
+                        }
+                        setData({ ...data, templateId: t.id });
+                      }}
                       className={`group relative rounded-lg border p-5 text-left transition-all ${
                         active ? "border-gold bg-surface-2 shadow-glow" : "border-subtle bg-surface hover:border-gold/50"
                       }`}
                     >
+                      {locked && (
+                        <div className="absolute right-3 top-3 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full bg-background/80 text-gold border border-gold/40">
+                          <Lock className="h-3 w-3" />
+                        </div>
+                      )}
                       <div className="flex aspect-[3/4] items-center justify-center rounded-md bg-background/60">
                         <span className="font-serif text-4xl text-gold/60">{t.name[0]}</span>
                       </div>
                       <div className="mt-4 flex items-center justify-between">
                         <div>
                           <p className="font-serif text-lg text-foreground">{t.name}</p>
-                          <p className="text-xs uppercase tracking-widest text-dim">{t.line}</p>
+                          <p className="text-xs uppercase tracking-widest text-dim">{t.line}{locked ? " · Pro" : ""}</p>
                         </div>
                         {active && (
                           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gold">
@@ -608,6 +635,12 @@ const Builder = () => {
         </>)}
       </section>
       <Footer />
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        reason={upgradeReason}
+        templateId={upgradeTpl}
+      />
     </div>
   );
 };

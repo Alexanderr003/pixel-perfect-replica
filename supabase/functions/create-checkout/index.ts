@@ -13,6 +13,7 @@ interface Body {
   userId?: string;
   returnUrl: string;
   environment: StripeEnv;
+  metadata?: Record<string, string>;
 }
 
 Deno.serve(async (req) => {
@@ -43,9 +44,10 @@ Deno.serve(async (req) => {
       return_url: body.returnUrl,
       ...(body.customerEmail && { customer_email: body.customerEmail }),
       ...(body.userId && {
-        metadata: { userId: body.userId },
+        metadata: { userId: body.userId, ...(body.metadata ?? {}) },
         ...(isRecurring && { subscription_data: { metadata: { userId: body.userId } } }),
       }),
+      ...(!body.userId && body.metadata && { metadata: body.metadata }),
     });
 
     return new Response(JSON.stringify({ clientSecret: session.client_secret }), {

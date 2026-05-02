@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Sparkles, Check } from "lucide-react";
+import { ArrowRight, Sparkles, Check, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Nav } from "@/components/site/Nav";
 import { Footer } from "@/components/site/Footer";
+import { useEntitlements, isPremiumTemplate } from "@/hooks/useEntitlements";
+import { UpgradeDialog } from "@/components/payments/UpgradeDialog";
 
 import tplBlanc from "@/assets/template-blanc.jpg";
 import tplObsidian from "@/assets/template-obsidian.jpg";
@@ -55,6 +57,9 @@ const lineDescription: Record<Line, string> = {
 
 const Templates = () => {
   const [active, setActive] = useState<(typeof filters)[number]>("All");
+  const { canUseTemplate } = useEntitlements();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradeTpl, setUpgradeTpl] = useState<string | undefined>();
 
   const filtered = useMemo(
     () => (active === "All" ? templates : templates.filter((t) => t.line === active)),
@@ -83,7 +88,7 @@ const Templates = () => {
         </h1>
         <p className="mt-5 mx-auto max-w-xl text-dim">
           Every template is hand-tuned for typographic balance, ATS parsing and
-          on-screen elegance. Choose one — or own it forever for $12.
+          on-screen elegance. Choose one — or own it forever for $4.99.
         </p>
       </section>
 
@@ -125,6 +130,7 @@ const Templates = () => {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((t) => (
             <article key={t.id} className="group">
+              {canUseTemplate(t.id) ? (
               <Link to={`/builder?template=${t.id}`} className="block">
                 <div className="relative overflow-hidden rounded-md border border-subtle bg-surface aspect-[3/4]">
                   <img
@@ -146,6 +152,27 @@ const Templates = () => {
                   </div>
                 </div>
               </Link>
+              ) : (
+              <button
+                type="button"
+                onClick={() => { setUpgradeTpl(t.id); setUpgradeOpen(true); }}
+                className="block w-full text-left"
+              >
+                <div className="relative overflow-hidden rounded-md border border-subtle bg-surface aspect-[3/4]">
+                  <img src={t.img} alt={`${t.name} CV template preview`} loading="lazy" width={768} height={1024}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]" />
+                  <div className="absolute inset-0 bg-background/40" />
+                  <span className="absolute top-4 left-4 rounded-sm border border-gold/40 bg-background/70 backdrop-blur px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-gold">
+                    {t.line}
+                  </span>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="inline-flex items-center gap-2 rounded-sm bg-background/80 backdrop-blur border border-gold/40 px-4 py-2 text-xs uppercase tracking-[0.2em] text-gold">
+                      <Lock className="h-3 w-3" /> Pro
+                    </span>
+                  </div>
+                </div>
+              </button>
+              )}
 
               <div className="mt-5 flex items-baseline justify-between">
                 <h2 className="font-serif text-2xl">{t.name}</h2>
@@ -157,15 +184,24 @@ const Templates = () => {
               </p>
 
               <div className="mt-5 flex items-center gap-3">
-                <Button variant="goldOutline" size="sm" asChild>
-                  <Link to={`/builder?template=${t.id}`}>Use template</Link>
-                </Button>
-                <Link
-                  to={`/checkout?template=${t.id}&type=own`}
-                  className="text-xs text-dim hover:text-gold transition-colors"
-                >
-                  Own it · $12
-                </Link>
+                {canUseTemplate(t.id) ? (
+                  <Button variant="goldOutline" size="sm" asChild>
+                    <Link to={`/builder?template=${t.id}`}>Use template</Link>
+                  </Button>
+                ) : (
+                  <Button variant="goldOutline" size="sm" onClick={() => { setUpgradeTpl(t.id); setUpgradeOpen(true); }}>
+                    <Lock className="mr-1.5 h-3 w-3" /> Unlock
+                  </Button>
+                )}
+                {isPremiumTemplate(t.id) && (
+                  <button
+                    type="button"
+                    onClick={() => { setUpgradeTpl(t.id); setUpgradeOpen(true); }}
+                    className="text-xs text-dim hover:text-gold transition-colors"
+                  >
+                    Own it · $4.99
+                  </button>
+                )}
               </div>
             </article>
           ))}
@@ -220,6 +256,7 @@ const Templates = () => {
       </section>
 
       <Footer />
+      <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} reason="premium_template" templateId={upgradeTpl} />
     </div>
   );
 };

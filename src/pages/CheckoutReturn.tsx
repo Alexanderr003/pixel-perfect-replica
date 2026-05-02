@@ -1,12 +1,35 @@
 import { Link, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/site/AuthProvider";
+import { getStripeEnvironment } from "@/lib/stripe";
 import { Nav } from "@/components/site/Nav";
 import { Footer } from "@/components/site/Footer";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 
 const CheckoutReturn = () => {
   const [params] = useSearchParams();
   const sessionId = params.get("session_id");
+  const { user } = useAuth();
+  const [confirmed, setConfirmed] = useState(false);
+
+  useEffect(() => {
+    if (!user || !sessionId) return;
+    let attempts = 0;
+    const env = getStripeEnvironment();
+    const tick = async () => {
+      attempts++;
+      const [{ data: sub }, { data: tpls }] = await Promise.all([
+        supabase.from("subscriptions").select("status").eq("user_id", user.id).eq("environment", env).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+        supabase.from("template_purchases").select("id").eq("user_id", user.id).eq("environment", env).limit(1),
+      ]);
+      const ok = (sub && ["active","trialing","past_due"].includes((sub as any).status)) || (tpls && tpls.length > 0);
+      if (ok) { setConfirmed(true); return; }
+      if (attempts < 15) setTimeout(tick, 1500);
+    };
+    tick();
+  }, [user, sessionId]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -17,9 +40,11 @@ const CheckoutReturn = () => {
         </div>
         <h1 className="mt-6 font-serif text-4xl md:text-5xl">Thank you</h1>
         <p className="mt-3 max-w-md text-dim">
-          {sessionId
-            ? "Your payment has been received. Your account is being updated — this usually takes a few seconds."
-            : "No session information found."}
+          {!sessionId
+            ? "No session information found."
+            : confirmed
+              ? "Your account has been updated. Enjoy."
+              : (<span className="inline-flex items-center gap-2"><Loader2 className="h-3 w-3 animate-spin" /> Confirming your purchase…</span>)}
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Button asChild variant="gold">
