@@ -74,9 +74,9 @@ const Builder = () => {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState<boolean>(!!initialId);
   const [downloading, setDownloading] = useState(false);
-  const { isPro, canUseTemplate, ownedTemplates } = useEntitlements();
+  const { isPro, canUseTemplate, canCreateNewCv, ownedTemplates } = useEntitlements();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [upgradeReason, setUpgradeReason] = useState<"premium_template" | "watermark">("premium_template");
+  const [upgradeReason, setUpgradeReason] = useState<"premium_template" | "watermark" | "cv_limit">("premium_template");
   const [upgradeTpl, setUpgradeTpl] = useState<string | undefined>();
   // Autosave state
   const cvIdRef = useRef<string | null>(initialId);
@@ -146,6 +146,13 @@ const Builder = () => {
 
   const runAutosave = async () => {
     if (!user) return;
+    // Free plan: do not silently create a 2nd CV via autosave
+    if (!cvIdRef.current && !canCreateNewCv) {
+      setAutoStatus("idle");
+      setUpgradeReason("cv_limit");
+      setUpgradeOpen(true);
+      return;
+    }
     if (inFlightRef.current) {
       pendingRef.current = true;
       return;
