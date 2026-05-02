@@ -1,5 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { type StripeEnv, verifyWebhook } from "../_shared/stripe.ts";
+import { type StripeEnv, createStripeClient, verifyWebhook } from "../_shared/stripe.ts";
 
 let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
@@ -15,7 +15,7 @@ function getSupabase() {
 async function syncProfilePlan(userId: string, priceId: string, status: string, periodEnd: number | null) {
   const isPro =
     (priceId === "pro_monthly" || priceId === "pro_yearly") &&
-    (status === "active" || status === "trialing" ||
+    (status === "active" || status === "trialing" || status === "past_due" ||
       (status === "canceled" && periodEnd && periodEnd * 1000 > Date.now()));
   await getSupabase()
     .from("profiles")
@@ -69,36 +69,82 @@ async function handleSubscriptionDeleted(subscription: any, env: StripeEnv) {
 }
 
 async function handleCheckoutCompleted(session: any, env: StripeEnv) {
-  // One-time purchases (templates, AI credits packs)
-  if (session.mode !== "payment") return;
+  if (session.mode !== "payment") return; // subscriptions handled by subscription.* events
   const userId = session.metadata?.userId;
-  if (!userId) return;
-
-  try {
-    const items = session.line_items?.data ?? [];
-    for (const li of items) {
-      const priceId = li.price?.metadata?.lovable_external_id || li.price?.id;
-      const qty = li.quantity || 1;
-      if (priceId === "ai_credits_pack_one_time") {
-        // 50 credits per pack
-        const granted = 50 * qty;
-        const { data: prof } = await getSupabase()
-          .from("profiles").select("credits").eq("id", userId).maybeSingle();
-        const current = (prof as { credits?: number } | null)?.credits ?? 0;
-        await getSupabase()
-          .from("profiles")
-          .update({ credits: current + granted, updated_at: new Date().toISOString() })
-          .eq("id", userId);
-      }
-    }
-  } catch (e) {
-    console.error("checkout.session.completed processing failed:", e);
+  if (!userId) {
+    console.warn("checkout.session.completed without userId metadata");
+    return;
   }
-  console.log("One-time payment recorded for user", userId, "env", env);
+
+  // Re-fetch session expanded with line items + product metadata
+  const stripe = createStripeClient(env);
+  const full = await stripe.checkout.sessions.retrieve(session.id, {
+    expand: ["line_items.data.price.product"],
+  });
+  const items = (full as any).line_items?.data ?? [];
+
+  for (const li of items) {
+    const price = li.price;
+    const product = price?.product;
+    const priceLookup =
+      price?.metadata?.lovable_external_id ||
+      product?.metadata?.lovable_external_id ||
+      price?.id;
+    const qty = li.quantity || 1;
+
+    if (priceLookup === "ai_credits_pack" || priceLookup === "ai_credits_pack_one_time") {
+      const granted = 50 * qty;
+      const { data: prof } = await getSupabase()
+        .from("profiles").select("credits").eq("id", userId).maybeSingle();
+      const current = (prof as { credits?: number } | null)?.credits ?? 0;
+      await getSupabase()
+        .from("profiles")
+        .update({ credits: current + granted, updated_at: new Date().toISOString() })
+        .eq("id", userId);
+      console.log("Granted", granted, "credits to", userId);
+    } else if (priceLookup === "premium_template" || priceLookup === "premium_template_one_time") {
+      const templateId = session.metadata?.templateId || "any";
+      await getSupabase().from("template_purchases").upsert(
+        {
+          user_id: userId,
+          template_id: templateId,
+          stripe_session_id: session.id,
+          environment: env,
+        },
+        { onConflict: "stripe_session_id" }
+      );
+      console.log("Template", templateId, "unlocked for", userId);
+    } else {
+      console.log("Unknown one-time price:", priceLookup);
+    }
+  }
+}
+
+async function handleInvoicePaymentFailed(invoice: any, env: StripeEnv) {
+  const subId = invoice.subscription;
+  if (!subId) return;
+  await getSupabase()
+    .from("subscriptions")
+    .update({ status: "past_due", updated_at: new Date().toISOString() })
+    .eq("stripe_subscription_id", subId)
+    .eq("environment", env);
 }
 
 async function handleWebhook(req: Request, env: StripeEnv) {
-  const event = await verifyWebhook(req, env);
+  const event = await verifyWebhook(req, env) as any;
+
+  // Idempotency: skip if already processed
+  if (event.id) {
+    const { error: insErr } = await getSupabase()
+      .from("purchase_events")
+      .insert({ stripe_event_id: event.id, event_type: event.type, environment: env });
+    if (insErr) {
+      // unique violation — already processed
+      console.log("Event already processed:", event.id);
+      return;
+    }
+  }
+
   switch (event.type) {
     case "customer.subscription.created":
     case "customer.subscription.updated":
@@ -109,6 +155,9 @@ async function handleWebhook(req: Request, env: StripeEnv) {
       break;
     case "checkout.session.completed":
       await handleCheckoutCompleted(event.data.object, env);
+      break;
+    case "invoice.payment_failed":
+      await handleInvoicePaymentFailed(event.data.object, env);
       break;
     default:
       console.log("Unhandled event:", event.type);
