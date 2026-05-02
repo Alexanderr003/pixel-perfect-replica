@@ -22,6 +22,7 @@ import { PreviewWatermark } from "@/components/payments/PreviewWatermark";
 import { Lock } from "lucide-react";
 import { AiRewriteButton } from "@/components/ai/AiRewriteButton";
 import { useAiRewrite } from "@/hooks/useAiRewrite";
+import { CvImportBlock, type ExtractedCv } from "@/components/cv/CvImportBlock";
 
 type Experience = { id: string; role: string; company: string; period: string; description: string };
 type Education = { id: string; degree: string; school: string; period: string };
@@ -83,6 +84,38 @@ const Builder = () => {
   const [upgradeTpl, setUpgradeTpl] = useState<string | undefined>();
   const { rewrite, loading: aiLoading } = useAiRewrite();
   const [aiTarget, setAiTarget] = useState<string | null>(null); // "summary" | exp.id
+  const [importDismissed, setImportDismissed] = useState(false);
+
+  const applyExtracted = (ex: ExtractedCv) => {
+    setData((d) => ({
+      ...d,
+      basics: {
+        ...d.basics,
+        fullName: [ex.firstName, ex.lastName].filter(Boolean).join(" ").trim() || d.basics.fullName,
+        headline: ex.title || d.basics.headline,
+        email: ex.email || d.basics.email,
+        phone: ex.phone || d.basics.phone,
+        location: [ex.city, ex.country].filter(Boolean).join(", ") || d.basics.location,
+        website: ex.website || ex.linkedin || d.basics.website,
+      },
+      summary: ex.summary || d.summary,
+      experience: (ex.experience ?? []).slice(0, 10).map((e) => ({
+        id: uid(),
+        role: e.jobTitle ?? "",
+        company: e.company ?? "",
+        period: [e.startDate, e.endDate].filter(Boolean).join(" — "),
+        description: e.description ?? "",
+      })),
+      education: (ex.education ?? []).slice(0, 8).map((e) => ({
+        id: uid(),
+        degree: e.degree ?? "",
+        school: e.institution ?? "",
+        period: e.year ?? "",
+      })),
+      skills: Array.from(new Set((ex.skills ?? []).filter(Boolean))).slice(0, 30),
+    }));
+    setImportDismissed(true);
+  };
 
   const buildAiProfile = () => ({
     name: data.basics.fullName,
