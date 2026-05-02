@@ -481,6 +481,13 @@ const Builder = () => {
               </Field>
               <div className="md:col-span-2">
                 <Field label="Professional summary" id="summary">
+                  <div className="mb-2 flex justify-end">
+                    <AiRewriteButton
+                      onClick={handleAiSummary}
+                      loading={aiLoading && aiTarget === "summary"}
+                      label={data.summary ? "Rewrite with AI" : "Generate with AI"}
+                    />
+                  </div>
                   <Textarea
                     id="summary"
                     rows={4}
@@ -534,6 +541,13 @@ const Builder = () => {
                     </div>
                     <div className="md:col-span-2">
                       <Field label="Description" id={`desc-${exp.id}`}>
+                        <div className="mb-2 flex justify-end">
+                          <AiRewriteButton
+                            onClick={() => handleAiBullets(exp.id, idx)}
+                            loading={aiLoading && aiTarget === exp.id}
+                            label={exp.description ? "Rewrite as bullets" : "Generate bullets"}
+                          />
+                        </div>
                         <Textarea
                           id={`desc-${exp.id}`}
                           rows={3}
