@@ -9,6 +9,7 @@ import Templates from "./pages/Templates.tsx";
 import Auth from "./pages/Auth.tsx";
 import Builder from "./pages/Builder.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
+import CheckoutReturn from "./pages/CheckoutReturn.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { ThemeProvider } from "./components/site/ThemeProvider";
 import { AuthProvider } from "./components/site/AuthProvider";
@@ -30,6 +31,7 @@ const App = () => (
               <Route path="/templates" element={<Templates />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<Auth />} />
+              <Route path="/checkout/return" element={<CheckoutReturn />} />
               <Route
                 path="/builder"
                 element={
