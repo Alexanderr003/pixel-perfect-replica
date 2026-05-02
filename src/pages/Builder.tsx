@@ -16,6 +16,9 @@ import { CvPreview } from "@/components/cv/CvPreview";
 import type { CvPreviewData } from "@/components/cv/CvPreview";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { downloadCvPdf } from "@/lib/pdf";
+import { useEntitlements, isPremiumTemplate } from "@/hooks/useEntitlements";
+import { UpgradeDialog } from "@/components/payments/UpgradeDialog";
+import { Lock } from "lucide-react";
 
 type Experience = { id: string; role: string; company: string; period: string; description: string };
 type Education = { id: string; degree: string; school: string; period: string };
@@ -71,6 +74,10 @@ const Builder = () => {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState<boolean>(!!initialId);
   const [downloading, setDownloading] = useState(false);
+  const { isPro, canUseTemplate, ownedTemplates } = useEntitlements();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState<"premium_template" | "watermark">("premium_template");
+  const [upgradeTpl, setUpgradeTpl] = useState<string | undefined>();
   // Autosave state
   const cvIdRef = useRef<string | null>(initialId);
   const [autoStatus, setAutoStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -258,7 +265,13 @@ const Builder = () => {
     setDownloading(true);
     try {
       const safe = (data.basics.fullName || "cv").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      await downloadCvPdf(data, `${safe || "cv"}.pdf`);
+      await downloadCvPdf(data, `${safe || "cv"}.pdf`, { watermark: !isPro });
+      if (!isPro) {
+        toast.message("Watermark on Free plan", {
+          description: "Upgrade to Pro to remove it.",
+          action: { label: "Go Pro", onClick: () => { setUpgradeReason("watermark"); setUpgradeOpen(true); } },
+        });
+      }
     } catch (err) {
       toast.error("Could not generate PDF");
     } finally {
