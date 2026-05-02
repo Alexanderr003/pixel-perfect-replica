@@ -1,49 +1,69 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Check, Sparkles, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Nav } from "@/components/site/Nav";
 import { Footer } from "@/components/site/Footer";
+import { useAuth } from "@/components/site/AuthProvider";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { useSubscription } from "@/hooks/useSubscription";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PaymentTestModeBanner } from "@/components/payments/PaymentTestModeBanner";
+import { toast } from "sonner";
 
 type Billing = "monthly" | "yearly";
 
-const plans = (billing: Billing) => [
+type Plan = {
+  name: string;
+  tagline: string;
+  price: string;
+  sub: string;
+  features: string[];
+  cta: string;
+  priceId?: string;
+  featured?: boolean;
+  href?: string;
+};
+
+const plans = (billing: Billing): Plan[] => [
   {
-    name: "Starter",
+    name: "Free",
     tagline: "Try the experience.",
-    price: "$1.99",
-    sub: "one-time",
-    features: ["1 CV", "4 Core templates", "PDF download", "Basic AI rewrite"],
-    cta: "Start with $1.99",
+    price: "$0",
+    sub: "forever",
+    features: ["1 CV", "Core templates", "PDF with watermark", "Basic AI rewrite"],
+    cta: "Start free",
+    href: "/auth?mode=signup",
   },
   {
     name: "Pro",
     tagline: "For serious job seekers.",
-    price: billing === "monthly" ? "$9" : "$70",
-    sub: billing === "monthly" ? "per month" : "per year · save $38",
+    price: billing === "monthly" ? "$1.99" : "$19",
+    sub: billing === "monthly" ? "per month" : "per year · save 20%",
     features: [
       "Unlimited CVs",
-      "9 templates (Core + Pro)",
-      "Cover letter generator",
-      "LinkedIn bio optimiser",
-      "Job match dashboard",
+      "All premium templates",
+      "Unlimited AI rewrites",
+      "PDF without watermark",
+      "Priority support",
     ],
     cta: "Go Pro",
+    priceId: billing === "monthly" ? "pro_monthly" : "pro_yearly",
     featured: true,
   },
   {
-    name: "Elite",
-    tagline: "The full studio.",
-    price: billing === "monthly" ? "$19" : "$148",
-    sub: billing === "monthly" ? "per month" : "per year · save $80",
+    name: "AI Credits",
+    tagline: "Power up on demand.",
+    price: "$9.99",
+    sub: "50 AI credits · one-time",
     features: [
-      "Everything in Pro",
-      "All 12 premium templates",
-      "AI headshot generator",
-      "Priority support",
-      "Early access to new templates",
+      "Premium AI generations",
+      "Cover letter writer",
+      "Headline & bio polish",
+      "Stack on any plan",
     ],
-    cta: "Go Elite",
+    cta: "Buy credits",
+    priceId: "ai_credits_pack_one_time",
   },
 ];
 
@@ -74,9 +94,45 @@ const Pricing = () => {
   const [billing, setBilling] = useState<Billing>("monthly");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const items = plans(billing);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { openCheckout, closeCheckout, isOpen, checkoutElement } = useStripeCheckout();
+  const { isPro } = useSubscription();
+
+  const handlePlanClick = (p: Plan) => {
+    if (p.href) {
+      navigate(p.href);
+      return;
+    }
+    if (!p.priceId) return;
+    if (!user) {
+      toast.message("Sign in to continue", { description: "Create an account to complete your purchase." });
+      navigate("/auth?mode=signup");
+      return;
+    }
+    if (isPro && (p.priceId === "pro_monthly" || p.priceId === "pro_yearly")) {
+      toast.success("You're already Pro.");
+      return;
+    }
+    openCheckout({
+      priceId: p.priceId,
+      customerEmail: user.email ?? undefined,
+      userId: user.id,
+    });
+  };
+
+  const handleOwnTemplate = () => {
+    if (!user) { navigate("/auth?mode=signup"); return; }
+    openCheckout({
+      priceId: "premium_template_one_time",
+      customerEmail: user.email ?? undefined,
+      userId: user.id,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <PaymentTestModeBanner />
       <Nav />
 
       <section className="container pt-20 pb-12 md:pt-28 text-center">
@@ -146,9 +202,9 @@ const Pricing = () => {
                 variant={p.featured ? "gold" : "goldOutline"}
                 size="lg"
                 className="mt-8"
-                asChild
+                onClick={() => handlePlanClick(p)}
               >
-                <Link to="/checkout">{p.cta}</Link>
+                {p.cta}
               </Button>
             </div>
           ))}
@@ -162,14 +218,14 @@ const Pricing = () => {
             <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-gold">
               <Sparkles className="h-3 w-3" /> One-time, forever
             </div>
-            <h2 className="mt-5 font-serif text-4xl md:text-5xl">Own a template — $12</h2>
+            <h2 className="mt-5 font-serif text-4xl md:text-5xl">Own a template — $4.99</h2>
             <p className="mt-4 text-dim max-w-lg">
               Pick any single template and make it yours forever. Unlimited uses,
               all future style updates, no subscription required.
             </p>
             <ul className="mt-6 space-y-2 text-sm text-dim">
               <li className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-gold" /> Choose any of the 12 templates
+                <Check className="h-4 w-4 text-gold" /> Choose any premium template
               </li>
               <li className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-gold" /> Unlimited CVs with that template
@@ -180,10 +236,10 @@ const Pricing = () => {
             </ul>
           </div>
           <div className="text-center md:text-right">
-            <div className="font-serif text-7xl text-gradient-gold">$12</div>
+            <div className="font-serif text-7xl text-gradient-gold">$4.99</div>
             <div className="text-xs text-dim mt-2">paid once</div>
-            <Button variant="gold" size="xl" className="mt-6" asChild>
-              <Link to="/templates">Choose a template</Link>
+            <Button variant="gold" size="xl" className="mt-6" onClick={handleOwnTemplate}>
+              Unlock a template
             </Button>
           </div>
         </div>
@@ -221,6 +277,17 @@ const Pricing = () => {
       </section>
 
       <Footer />
+
+      <Dialog open={isOpen} onOpenChange={(v) => { if (!v) closeCheckout(); }}>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden">
+          <DialogHeader className="border-b border-subtle px-6 py-4">
+            <DialogTitle className="font-serif text-xl">Complete your purchase</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[80vh] overflow-y-auto bg-white">
+            {checkoutElement}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
