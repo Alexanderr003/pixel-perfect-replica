@@ -88,7 +88,7 @@ const Templates = () => {
         </h1>
         <p className="mt-5 mx-auto max-w-xl text-dim">
           Every template is hand-tuned for typographic balance, ATS parsing and
-          on-screen elegance. Choose one — or own it forever for $12.
+          on-screen elegance. Choose one — or own it forever for $4.99.
         </p>
       </section>
 
