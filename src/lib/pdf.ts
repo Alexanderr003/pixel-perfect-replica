@@ -8,8 +8,7 @@ export async function downloadCvPdf(data: CvPreviewData, filename = "cv.pdf") {
   const { createRoot } = await import("react-dom/client");
   const React = await import("react");
   const { CvPreview } = await import("@/components/cv/CvPreview");
-  // @ts-expect-error - no types
-  const html2pdf = (await import("html2pdf.js")).default;
+  const html2pdf = ((await import("html2pdf.js")) as any).default;
 
   const host = document.createElement("div");
   host.style.position = "fixed";
@@ -39,8 +38,7 @@ export async function downloadCvPdf(data: CvPreviewData, filename = "cv.pdf") {
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["css", "legacy"] },
-      })
+      } as any)
       .from(node)
       .save();
   } finally {
