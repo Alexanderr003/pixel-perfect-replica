@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,11 @@ import { Nav } from "@/components/site/Nav";
 import { Footer } from "@/components/site/Footer";
 import { useAuth } from "@/components/site/AuthProvider";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Check, Eye, Loader2, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Download, Eye, Loader2, Plus, Trash2 } from "lucide-react";
 import { CvPreview } from "@/components/cv/CvPreview";
 import type { CvPreviewData } from "@/components/cv/CvPreview";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { downloadCvPdf } from "@/lib/pdf";
 
 type Experience = { id: string; role: string; company: string; period: string; description: string };
 type Education = { id: string; degree: string; school: string; period: string };
@@ -62,14 +63,44 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 const Builder = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const cvId = params.get("id");
   const [step, setStep] = useState(0);
   const [data, setData] = useState<CvData>(emptyData);
   const [skillInput, setSkillInput] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState<boolean>(!!cvId);
+  const [downloading, setDownloading] = useState(false);
 
-  // Prefill name from profile
+  // Load existing CV when ?id=, otherwise prefill from profile
   useEffect(() => {
     if (!user) return;
+    if (cvId) {
+      setLoading(true);
+      supabase
+        .from("cvs")
+        .select("data, template_id")
+        .eq("id", cvId)
+        .maybeSingle()
+        .then(({ data: row, error }) => {
+          if (error || !row) {
+            toast.error("Could not load this CV");
+            navigate("/dashboard");
+            return;
+          }
+          const d = (row.data ?? {}) as Partial<CvData>;
+          setData({
+            basics: { fullName: "", headline: "", email: "", phone: "", location: "", website: "", ...(d.basics ?? {}) },
+            summary: d.summary ?? "",
+            experience: d.experience ?? [],
+            education: d.education ?? [],
+            skills: d.skills ?? [],
+            templateId: d.templateId ?? row.template_id ?? "ivory",
+          });
+        })
+        .then(() => setLoading(false));
+      return;
+    }
     supabase
       .from("profiles")
       .select("full_name")
@@ -82,7 +113,7 @@ const Builder = () => {
           setData((d) => ({ ...d, basics: { ...d.basics, email: user.email ?? "" } }));
         }
       });
-  }, [user]);
+  }, [user, cvId, navigate]);
 
   const progress = useMemo(() => ((step + 1) / steps.length) * 100, [step]);
 
@@ -133,16 +164,21 @@ const Builder = () => {
     setSaving(true);
     try {
       const title = data.basics.fullName ? `${data.basics.fullName} — CV` : "Untitled CV";
-      const { error } = await supabase.from("cvs").insert([
-        {
-          user_id: user.id,
-          title,
-          template_id: data.templateId,
-          data: JSON.parse(JSON.stringify(data)),
-        },
-      ]);
-      if (error) throw error;
-      toast.success("CV saved.");
+      const payload = {
+        user_id: user.id,
+        title,
+        template_id: data.templateId,
+        data: JSON.parse(JSON.stringify(data)),
+      };
+      if (cvId) {
+        const { error } = await supabase.from("cvs").update(payload).eq("id", cvId);
+        if (error) throw error;
+        toast.success("CV updated.");
+      } else {
+        const { error } = await supabase.from("cvs").insert([payload]);
+        if (error) throw error;
+        toast.success("CV saved.");
+      }
       navigate("/dashboard");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save");
@@ -151,10 +187,28 @@ const Builder = () => {
     }
   };
 
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const safe = (data.basics.fullName || "cv").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      await downloadCvPdf(data, `${safe || "cv"}.pdf`);
+    } catch (err) {
+      toast.error("Could not generate PDF");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Nav />
       <section className="container py-10 md:py-14">
+        {loading && (
+          <div className="flex justify-center py-20">
+            <Loader2 className="h-6 w-6 animate-spin text-gold" />
+          </div>
+        )}
+        {!loading && (<>
         {/* Stepper */}
         <div className="mb-8 max-w-4xl">
           <div className="flex items-center justify-between text-xs uppercase tracking-widest text-dim">
@@ -192,17 +246,23 @@ const Builder = () => {
           <div>
             <div className="flex items-center justify-between gap-4">
               <h1 className="font-serif text-4xl text-foreground md:text-5xl">{steps[step]}</h1>
-              {/* Mobile preview trigger */}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="goldOutline" size="sm" className="lg:hidden">
-                    <Eye className="mr-2 h-4 w-4" /> Preview
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-full overflow-auto bg-background p-4 sm:max-w-xl">
-                  <PreviewPane data={data} />
-                </SheetContent>
-              </Sheet>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" onClick={handleDownload} disabled={downloading} className="text-dim hover:text-foreground">
+                  {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                  PDF
+                </Button>
+                {/* Mobile preview trigger */}
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="goldOutline" size="sm" className="lg:hidden">
+                      <Eye className="mr-2 h-4 w-4" /> Preview
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-full overflow-auto bg-background p-4 sm:max-w-xl">
+                    <PreviewPane data={data} />
+                  </SheetContent>
+                </Sheet>
+              </div>
             </div>
 
             <div className="mt-6 rounded-lg border border-subtle bg-surface p-6 md:p-8">
@@ -460,7 +520,7 @@ const Builder = () => {
               ) : (
                 <Button variant="gold" onClick={save} disabled={saving}>
                   {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Save CV
+                  {cvId ? "Update CV" : "Save CV"}
                 </Button>
               )}
             </div>
@@ -477,6 +537,7 @@ const Builder = () => {
             </div>
           </aside>
         </div>
+        </>)}
       </section>
       <Footer />
     </div>

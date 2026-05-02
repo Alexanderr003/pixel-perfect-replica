@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/site/AuthProvider";
 import { CvPreview, type CvPreviewData } from "@/components/cv/CvPreview";
 import { toast } from "sonner";
-import { FileText, Loader2, Plus, Trash2 } from "lucide-react";
+import { Download, FileText, Loader2, Plus, Trash2 } from "lucide-react";
+import { downloadCvPdf } from "@/lib/pdf";
+import { useState as useStateAlias } from "react";
 
 type CvRow = {
   id: string;
@@ -135,9 +137,30 @@ const CvCard = ({ cv, onDelete }: { cv: CvRow; onDelete: () => void }) => {
           <Button variant="goldOutline" size="sm" className="flex-1" asChild>
             <Link to={`/builder?id=${cv.id}`}>Open</Link>
           </Button>
+          <DownloadButton data={data} title={cv.title} />
         </div>
       </div>
     </div>
+  );
+};
+
+const DownloadButton = ({ data, title }: { data: CvPreviewData; title: string }) => {
+  const [busy, setBusy] = useStateAlias(false);
+  const handle = async () => {
+    setBusy(true);
+    try {
+      const safe = (title || "cv").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      await downloadCvPdf(data, `${safe || "cv"}.pdf`);
+    } catch {
+      toast.error("Could not generate PDF");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Button variant="ghost" size="sm" onClick={handle} disabled={busy} className="text-dim hover:text-foreground">
+      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+    </Button>
   );
 };
 
