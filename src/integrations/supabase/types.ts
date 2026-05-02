@@ -77,6 +77,30 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_events: {
+        Row: {
+          created_at: string
+          environment: string
+          event_type: string
+          id: string
+          stripe_event_id: string
+        }
+        Insert: {
+          created_at?: string
+          environment: string
+          event_type: string
+          id?: string
+          stripe_event_id: string
+        }
+        Update: {
+          created_at?: string
+          environment?: string
+          event_type?: string
+          id?: string
+          stripe_event_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
@@ -125,6 +149,33 @@ export type Database = {
         }
         Relationships: []
       }
+      template_purchases: {
+        Row: {
+          created_at: string
+          environment: string
+          id: string
+          stripe_session_id: string
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          environment?: string
+          id?: string
+          stripe_session_id: string
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          environment?: string
+          id?: string
+          stripe_session_id?: string
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -160,6 +211,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      user_owns_template: {
+        Args: { _env?: string; _template_id: string; _user_id: string }
         Returns: boolean
       }
     }
