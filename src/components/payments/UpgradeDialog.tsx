@@ -6,7 +6,7 @@ import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { useAuth } from "@/components/site/AuthProvider";
 import { Dialog as InnerDialog, DialogContent as InnerContent, DialogHeader as InnerHeader, DialogTitle as InnerTitle } from "@/components/ui/dialog";
 
-type Reason = "premium_template" | "cv_limit" | "watermark";
+type Reason = "premium_template" | "cv_limit" | "watermark" | "ai_credits";
 
 interface Props {
   open: boolean;
@@ -30,6 +30,11 @@ const COPY: Record<Reason, { title: string; desc: string; bullets: string[] }> =
     title: "Remove the watermark",
     desc: "Pro removes the Profilum watermark from every PDF.",
     bullets: ["Clean PDF export", "Unlimited CVs", "Premium templates"],
+  },
+  ai_credits: {
+    title: "You've used all your AI credits",
+    desc: "Buy more credits to keep rewriting with AI — or go Pro for unlimited generations.",
+    bullets: ["50 more credits with the pack", "Pro: unlimited rewrites", "Cover letter & LinkedIn bio"],
   },
 };
 
@@ -56,6 +61,16 @@ export function UpgradeDialog({ open, onOpenChange, reason, templateId }: Props)
     });
   };
 
+  const buyCredits = () => {
+    if (!user) { navigate("/auth?mode=signup"); return; }
+    onOpenChange(false);
+    openCheckout({
+      priceId: "ai_credits_pack_one_time",
+      customerEmail: user.email ?? undefined,
+      userId: user.id,
+    });
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -73,9 +88,20 @@ export function UpgradeDialog({ open, onOpenChange, reason, templateId }: Props)
             ))}
           </ul>
           <DialogFooter className="flex-col gap-2 sm:flex-col">
-            <Button variant="gold" size="lg" className="w-full" onClick={goPro}>
-              Go Pro — $1.99/mo
-            </Button>
+            {reason === "ai_credits" ? (
+              <>
+                <Button variant="gold" size="lg" className="w-full" onClick={buyCredits}>
+                  Buy AI Credits — $4.99
+                </Button>
+                <Button variant="goldOutline" size="lg" className="w-full" onClick={goPro}>
+                  Go Pro — Unlimited
+                </Button>
+              </>
+            ) : (
+              <Button variant="gold" size="lg" className="w-full" onClick={goPro}>
+                Go Pro
+              </Button>
+            )}
             {reason === "premium_template" && templateId && (
               <Button variant="goldOutline" size="lg" className="w-full" onClick={buyTemplate}>
                 Own this template — $4.99

@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.create-portal-session]
 verify_jwt = false
+
+[functions.ai-rewrite]
+verify_jwt = false
+
+[functions.extract-cv]
+verify_jwt = false

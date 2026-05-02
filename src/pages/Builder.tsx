@@ -20,6 +20,9 @@ import { useEntitlements, isPremiumTemplate } from "@/hooks/useEntitlements";
 import { UpgradeDialog } from "@/components/payments/UpgradeDialog";
 import { PreviewWatermark } from "@/components/payments/PreviewWatermark";
 import { Lock } from "lucide-react";
+import { AiRewriteButton } from "@/components/ai/AiRewriteButton";
+import { useAiRewrite } from "@/hooks/useAiRewrite";
+import { CvImportBlock, type ExtractedCv } from "@/components/cv/CvImportBlock";
 
 type Experience = { id: string; role: string; company: string; period: string; description: string };
 type Education = { id: string; degree: string; school: string; period: string };
@@ -77,8 +80,108 @@ const Builder = () => {
   const [downloading, setDownloading] = useState(false);
   const { isPro, canUseTemplate, canCreateNewCv, ownedTemplates } = useEntitlements();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [upgradeReason, setUpgradeReason] = useState<"premium_template" | "watermark" | "cv_limit">("premium_template");
+  const [upgradeReason, setUpgradeReason] = useState<"premium_template" | "watermark" | "cv_limit" | "ai_credits">("premium_template");
   const [upgradeTpl, setUpgradeTpl] = useState<string | undefined>();
+  const { rewrite, loading: aiLoading } = useAiRewrite();
+  const [aiTarget, setAiTarget] = useState<string | null>(null); // "summary" | exp.id
+  const [importDismissed, setImportDismissed] = useState(false);
+
+  const applyExtracted = (ex: ExtractedCv) => {
+    setData((d) => ({
+      ...d,
+      basics: {
+        ...d.basics,
+        fullName: [ex.firstName, ex.lastName].filter(Boolean).join(" ").trim() || d.basics.fullName,
+        headline: ex.title || d.basics.headline,
+        email: ex.email || d.basics.email,
+        phone: ex.phone || d.basics.phone,
+        location: [ex.city, ex.country].filter(Boolean).join(", ") || d.basics.location,
+        website: ex.website || ex.linkedin || d.basics.website,
+      },
+      summary: ex.summary || d.summary,
+      experience: (ex.experience ?? []).slice(0, 10).map((e) => ({
+        id: uid(),
+        role: e.jobTitle ?? "",
+        company: e.company ?? "",
+        period: [e.startDate, e.endDate].filter(Boolean).join(" — "),
+        description: e.description ?? "",
+      })),
+      education: (ex.education ?? []).slice(0, 8).map((e) => ({
+        id: uid(),
+        degree: e.degree ?? "",
+        school: e.institution ?? "",
+        period: e.year ?? "",
+      })),
+      skills: Array.from(new Set((ex.skills ?? []).filter(Boolean))).slice(0, 30),
+    }));
+    setImportDismissed(true);
+  };
+
+  const buildAiProfile = () => ({
+    name: data.basics.fullName,
+    role: data.basics.headline,
+    industry: "",
+    tone: "Professional" as const,
+    summary: data.summary,
+    skills: data.skills,
+    experience: data.experience.map((e) => ({
+      jobTitle: e.role,
+      company: e.company,
+      description: e.description,
+    })),
+  });
+
+  const handleAiSummary = async () => {
+    if (!data.basics.fullName.trim()) {
+      toast.error("Add your name first.");
+      return;
+    }
+    setAiTarget("summary");
+    const res = await rewrite("summary", buildAiProfile(), {
+      onNoCredits: () => {
+        setUpgradeReason("ai_credits");
+        setUpgradeOpen(true);
+      },
+    });
+    setAiTarget(null);
+    if (res?.result) {
+      setData((d) => ({ ...d, summary: res.result.slice(0, 600) }));
+      toast.success(
+        res.isElite
+          ? "Generated · Unlimited"
+          : res.isPro
+          ? "Generated · Pro"
+          : `Generated · ${res.creditsRemaining} credits left`
+      );
+    }
+  };
+
+  const handleAiBullets = async (expId: string, idx: number) => {
+    const job = data.experience[idx];
+    if (!job?.role && !job?.description) {
+      toast.error("Add a role or description first.");
+      return;
+    }
+    setAiTarget(expId);
+    const res = await rewrite("bullets", buildAiProfile(), {
+      jobIndex: idx,
+      onNoCredits: () => {
+        setUpgradeReason("ai_credits");
+        setUpgradeOpen(true);
+      },
+    });
+    setAiTarget(null);
+    if (res?.result) {
+      updateExperience(expId, "description", res.result.slice(0, 600));
+      toast.success(
+        res.isElite
+          ? "Generated · Unlimited"
+          : res.isPro
+          ? "Generated · Pro"
+          : `Generated · ${res.creditsRemaining} credits left`
+      );
+    }
+  };
   // Autosave state
   const cvIdRef = useRef<string | null>(initialId);
   const [autoStatus, setAutoStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -361,6 +464,15 @@ const Builder = () => {
 
             <div className="mt-6 rounded-lg border border-subtle bg-surface p-6 md:p-8">
           {step === 0 && (
+            <>
+            {!initialId && !importDismissed && (
+              <div className="mb-6 md:col-span-2">
+                <CvImportBlock
+                  onExtracted={applyExtracted}
+                  onSkip={() => setImportDismissed(true)}
+                />
+              </div>
+            )}
             <div className="grid gap-5 md:grid-cols-2">
               <Field label="Full name *" id="fullName">
                 <Input
@@ -411,6 +523,13 @@ const Builder = () => {
               </Field>
               <div className="md:col-span-2">
                 <Field label="Professional summary" id="summary">
+                  <div className="mb-2 flex justify-end">
+                    <AiRewriteButton
+                      onClick={handleAiSummary}
+                      loading={aiLoading && aiTarget === "summary"}
+                      label={data.summary ? "Rewrite with AI" : "Generate with AI"}
+                    />
+                  </div>
                   <Textarea
                     id="summary"
                     rows={4}
@@ -422,6 +541,7 @@ const Builder = () => {
                 </Field>
               </div>
             </div>
+            </>
           )}
 
           {step === 1 && (
@@ -464,6 +584,13 @@ const Builder = () => {
                     </div>
                     <div className="md:col-span-2">
                       <Field label="Description" id={`desc-${exp.id}`}>
+                        <div className="mb-2 flex justify-end">
+                          <AiRewriteButton
+                            onClick={() => handleAiBullets(exp.id, idx)}
+                            loading={aiLoading && aiTarget === exp.id}
+                            label={exp.description ? "Rewrite as bullets" : "Generate bullets"}
+                          />
+                        </div>
                         <Textarea
                           id={`desc-${exp.id}`}
                           rows={3}
