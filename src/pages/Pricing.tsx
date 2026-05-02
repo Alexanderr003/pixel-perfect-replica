@@ -31,39 +31,49 @@ const plans = (billing: Billing): Plan[] => [
     tagline: "Try the experience.",
     price: "$0",
     sub: "forever",
-    features: ["1 CV", "Core templates", "PDF with watermark", "Basic AI rewrite"],
+    features: ["1 CV", "Core templates", "PDF with watermark", "5 AI credits"],
     cta: "Start free",
     href: "/auth?mode=signup",
   },
   {
+    name: "Starter",
+    tagline: "One CV, no subscription.",
+    price: "$2",
+    sub: "one-time",
+    features: ["1 polished CV", "4 core templates", "AI generation (10 credits)", "PDF download"],
+    cta: "Buy Starter",
+    priceId: "starter_one_time",
+  },
+  {
     name: "Pro",
     tagline: "For serious job seekers.",
-    price: billing === "monthly" ? "$1.99" : "$19",
-    sub: billing === "monthly" ? "per month" : "per year · save 20%",
+    price: billing === "monthly" ? "$9" : "$70",
+    sub: billing === "monthly" ? "per month" : "per year · save 35%",
     features: [
       "Unlimited CVs",
-      "All premium templates",
-      "Unlimited AI rewrites",
+      "All Pro templates",
+      "100 AI credits / month",
       "PDF without watermark",
-      "Priority support",
+      "Job Match dashboard",
     ],
     cta: "Go Pro",
     priceId: billing === "monthly" ? "pro_monthly" : "pro_yearly",
     featured: true,
   },
   {
-    name: "AI Credits",
-    tagline: "Power up on demand.",
-    price: "$9.99",
-    sub: "50 AI credits · one-time",
+    name: "Elite",
+    tagline: "The full studio.",
+    price: billing === "monthly" ? "$19" : "$148",
+    sub: billing === "monthly" ? "per month" : "per year · save 35%",
     features: [
-      "Premium AI generations",
-      "Cover letter writer",
-      "Headline & bio polish",
-      "Stack on any plan",
+      "Everything in Pro",
+      "Elite templates (Aurum)",
+      "Unlimited AI credits",
+      "AI headshot",
+      "Priority support",
     ],
-    cta: "Buy credits",
-    priceId: "ai_credits_pack_one_time",
+    cta: "Go Elite",
+    priceId: billing === "monthly" ? "elite_monthly" : "elite_yearly",
   },
 ];
 
@@ -74,11 +84,11 @@ const faqs = [
   },
   {
     q: "What does 'Own a template' mean?",
-    a: "Pay $12 once and a single template is yours forever. Use it for unlimited CVs, even after canceling any subscription.",
+    a: "Pay $12 once and a single premium template is yours forever. Use it for unlimited CVs, even after canceling any subscription.",
   },
   {
     q: "Are the CVs ATS-friendly?",
-    a: "Every template is built and tested against major ATS parsers. Claude also adds industry-specific keywords automatically.",
+    a: "Every template is built and tested against major ATS parsers. Our AI also adds industry-specific keywords automatically.",
   },
   {
     q: "Is there a refund policy?",
@@ -98,6 +108,7 @@ const Pricing = () => {
   const navigate = useNavigate();
   const { openCheckout, closeCheckout, isOpen, checkoutElement } = useStripeCheckout();
   const { isPro } = useSubscription();
+  const proIds = new Set(["pro_monthly", "pro_yearly", "elite_monthly", "elite_yearly"]);
 
   const handlePlanClick = (p: Plan) => {
     if (p.href) {
@@ -110,7 +121,7 @@ const Pricing = () => {
       navigate("/auth?mode=signup");
       return;
     }
-    if (isPro && (p.priceId === "pro_monthly" || p.priceId === "pro_yearly")) {
+    if (isPro && p.priceId && proIds.has(p.priceId)) {
       toast.success("You're already Pro.");
       return;
     }
@@ -168,7 +179,7 @@ const Pricing = () => {
 
       {/* Plans */}
       <section className="container pb-12">
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {items.map((p) => (
             <div
               key={p.name}
@@ -218,7 +229,7 @@ const Pricing = () => {
             <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-gold">
               <Sparkles className="h-3 w-3" /> One-time, forever
             </div>
-            <h2 className="mt-5 font-serif text-4xl md:text-5xl">Own a template — $4.99</h2>
+            <h2 className="mt-5 font-serif text-4xl md:text-5xl">Own a template — $12</h2>
             <p className="mt-4 text-dim max-w-lg">
               Pick any single template and make it yours forever. Unlimited uses,
               all future style updates, no subscription required.
@@ -236,7 +247,7 @@ const Pricing = () => {
             </ul>
           </div>
           <div className="text-center md:text-right">
-            <div className="font-serif text-7xl text-gradient-gold">$4.99</div>
+            <div className="font-serif text-7xl text-gradient-gold">$12</div>
             <div className="text-xs text-dim mt-2">paid once</div>
             <Button variant="gold" size="xl" className="mt-6" onClick={handleOwnTemplate}>
               Unlock a template
