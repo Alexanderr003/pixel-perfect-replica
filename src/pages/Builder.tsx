@@ -63,24 +63,31 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 const Builder = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [params] = useSearchParams();
-  const cvId = params.get("id");
+  const [params, setParams] = useSearchParams();
+  const initialId = params.get("id");
   const [step, setStep] = useState(0);
   const [data, setData] = useState<CvData>(emptyData);
   const [skillInput, setSkillInput] = useState("");
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState<boolean>(!!cvId);
+  const [loading, setLoading] = useState<boolean>(!!initialId);
   const [downloading, setDownloading] = useState(false);
+  // Autosave state
+  const cvIdRef = useRef<string | null>(initialId);
+  const [autoStatus, setAutoStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+  const hydratedRef = useRef(false);
+  const inFlightRef = useRef(false);
+  const pendingRef = useRef(false);
 
   // Load existing CV when ?id=, otherwise prefill from profile
   useEffect(() => {
     if (!user) return;
-    if (cvId) {
+    if (initialId) {
       setLoading(true);
       supabase
         .from("cvs")
         .select("data, template_id")
-        .eq("id", cvId)
+        .eq("id", initialId)
         .maybeSingle()
         .then(({ data: row, error }) => {
           if (error || !row) {
@@ -98,7 +105,11 @@ const Builder = () => {
             templateId: d.templateId ?? row.template_id ?? "ivory",
           });
         })
-        .then(() => setLoading(false));
+        .then(() => {
+          setLoading(false);
+          // mark hydrated on next tick so the load doesn't trigger autosave
+          setTimeout(() => { hydratedRef.current = true; }, 0);
+        });
       return;
     }
     supabase
@@ -112,8 +123,64 @@ const Builder = () => {
         } else {
           setData((d) => ({ ...d, basics: { ...d.basics, email: user.email ?? "" } }));
         }
+        setTimeout(() => { hydratedRef.current = true; }, 0);
       });
-  }, [user, cvId, navigate]);
+  }, [user, initialId, navigate]);
+
+  // Autosave: debounce 1.5s after any data change
+  useEffect(() => {
+    if (!user || !hydratedRef.current) return;
+    const timer = setTimeout(() => {
+      runAutosave();
+    }, 1500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, user]);
+
+  const runAutosave = async () => {
+    if (!user) return;
+    if (inFlightRef.current) {
+      pendingRef.current = true;
+      return;
+    }
+    inFlightRef.current = true;
+    setAutoStatus("saving");
+    try {
+      const title = data.basics.fullName ? `${data.basics.fullName} — CV` : "Untitled CV";
+      const payload = {
+        user_id: user.id,
+        title,
+        template_id: data.templateId,
+        data: JSON.parse(JSON.stringify(data)),
+      };
+      if (cvIdRef.current) {
+        const { error } = await supabase.from("cvs").update(payload).eq("id", cvIdRef.current);
+        if (error) throw error;
+      } else {
+        const { data: inserted, error } = await supabase
+          .from("cvs")
+          .insert([payload])
+          .select("id")
+          .single();
+        if (error) throw error;
+        cvIdRef.current = inserted.id;
+        // Reflect id in URL without navigation
+        const next = new URLSearchParams(params);
+        next.set("id", inserted.id);
+        setParams(next, { replace: true });
+      }
+      setAutoStatus("saved");
+      setLastSavedAt(new Date());
+    } catch {
+      setAutoStatus("error");
+    } finally {
+      inFlightRef.current = false;
+      if (pendingRef.current) {
+        pendingRef.current = false;
+        runAutosave();
+      }
+    }
+  };
 
   const progress = useMemo(() => ((step + 1) / steps.length) * 100, [step]);
 
@@ -170,8 +237,8 @@ const Builder = () => {
         template_id: data.templateId,
         data: JSON.parse(JSON.stringify(data)),
       };
-      if (cvId) {
-        const { error } = await supabase.from("cvs").update(payload).eq("id", cvId);
+      if (cvIdRef.current) {
+        const { error } = await supabase.from("cvs").update(payload).eq("id", cvIdRef.current);
         if (error) throw error;
         toast.success("CV updated.");
       } else {
@@ -247,6 +314,7 @@ const Builder = () => {
             <div className="flex items-center justify-between gap-4">
               <h1 className="font-serif text-4xl text-foreground md:text-5xl">{steps[step]}</h1>
               <div className="flex items-center gap-2">
+                <AutoSaveIndicator status={autoStatus} at={lastSavedAt} />
                 <Button variant="ghost" size="sm" onClick={handleDownload} disabled={downloading} className="text-dim hover:text-foreground">
                   {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
                   PDF
@@ -520,7 +588,7 @@ const Builder = () => {
               ) : (
                 <Button variant="gold" onClick={save} disabled={saving}>
                   {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {cvId ? "Update CV" : "Save CV"}
+                  {cvIdRef.current ? "Done" : "Save CV"}
                 </Button>
               )}
             </div>
