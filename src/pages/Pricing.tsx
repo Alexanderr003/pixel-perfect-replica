@@ -63,7 +63,7 @@ const plans = (billing: Billing): Plan[] => [
       "Stack on any plan",
     ],
     cta: "Buy credits",
-    priceId: "ai_credits_pack_one_time",
+    priceId: "ai_credits_pack",
   },
 ];
 
@@ -124,7 +124,7 @@ const Pricing = () => {
   const handleOwnTemplate = () => {
     if (!user) { navigate("/auth?mode=signup"); return; }
     openCheckout({
-      priceId: "premium_template_one_time",
+      priceId: "premium_template",
       customerEmail: user.email ?? undefined,
       userId: user.id,
     });
