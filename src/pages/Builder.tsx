@@ -20,6 +20,8 @@ import { useEntitlements, isPremiumTemplate } from "@/hooks/useEntitlements";
 import { UpgradeDialog } from "@/components/payments/UpgradeDialog";
 import { PreviewWatermark } from "@/components/payments/PreviewWatermark";
 import { Lock } from "lucide-react";
+import { AiRewriteButton } from "@/components/ai/AiRewriteButton";
+import { useAiRewrite } from "@/hooks/useAiRewrite";
 
 type Experience = { id: string; role: string; company: string; period: string; description: string };
 type Education = { id: string; degree: string; school: string; period: string };
@@ -77,8 +79,76 @@ const Builder = () => {
   const [downloading, setDownloading] = useState(false);
   const { isPro, canUseTemplate, canCreateNewCv, ownedTemplates } = useEntitlements();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const [upgradeReason, setUpgradeReason] = useState<"premium_template" | "watermark" | "cv_limit">("premium_template");
+  const [upgradeReason, setUpgradeReason] = useState<"premium_template" | "watermark" | "cv_limit" | "ai_credits">("premium_template");
   const [upgradeTpl, setUpgradeTpl] = useState<string | undefined>();
+  const { rewrite, loading: aiLoading } = useAiRewrite();
+  const [aiTarget, setAiTarget] = useState<string | null>(null); // "summary" | exp.id
+
+  const buildAiProfile = () => ({
+    name: data.basics.fullName,
+    role: data.basics.headline,
+    industry: "",
+    tone: "Professional" as const,
+    summary: data.summary,
+    skills: data.skills,
+    experience: data.experience.map((e) => ({
+      jobTitle: e.role,
+      company: e.company,
+      description: e.description,
+    })),
+  });
+
+  const handleAiSummary = async () => {
+    if (!data.basics.fullName.trim()) {
+      toast.error("Add your name first.");
+      return;
+    }
+    setAiTarget("summary");
+    const res = await rewrite("summary", buildAiProfile(), {
+      onNoCredits: () => {
+        setUpgradeReason("ai_credits");
+        setUpgradeOpen(true);
+      },
+    });
+    setAiTarget(null);
+    if (res?.result) {
+      setData((d) => ({ ...d, summary: res.result.slice(0, 600) }));
+      toast.success(
+        res.isElite
+          ? "Generated · Unlimited"
+          : res.isPro
+          ? "Generated · Pro"
+          : `Generated · ${res.creditsRemaining} credits left`
+      );
+    }
+  };
+
+  const handleAiBullets = async (expId: string, idx: number) => {
+    const job = data.experience[idx];
+    if (!job?.role && !job?.description) {
+      toast.error("Add a role or description first.");
+      return;
+    }
+    setAiTarget(expId);
+    const res = await rewrite("bullets", buildAiProfile(), {
+      jobIndex: idx,
+      onNoCredits: () => {
+        setUpgradeReason("ai_credits");
+        setUpgradeOpen(true);
+      },
+    });
+    setAiTarget(null);
+    if (res?.result) {
+      updateExperience(expId, "description", res.result.slice(0, 600));
+      toast.success(
+        res.isElite
+          ? "Generated · Unlimited"
+          : res.isPro
+          ? "Generated · Pro"
+          : `Generated · ${res.creditsRemaining} credits left`
+      );
+    }
+  };
   // Autosave state
   const cvIdRef = useRef<string | null>(initialId);
   const [autoStatus, setAutoStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
