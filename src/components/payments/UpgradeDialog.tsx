@@ -104,7 +104,7 @@ export function UpgradeDialog({ open, onOpenChange, reason, templateId }: Props)
             )}
             {reason === "premium_template" && templateId && (
               <Button variant="goldOutline" size="lg" className="w-full" onClick={buyTemplate}>
-                Own this template — $4.99
+                Own this template — $12
               </Button>
             )}
           </DialogFooter>
