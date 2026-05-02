@@ -242,6 +242,11 @@ const Builder = () => {
 
   const save = async () => {
     if (!user) return;
+    if (!cvIdRef.current && !canCreateNewCv) {
+      setUpgradeReason("cv_limit");
+      setUpgradeOpen(true);
+      return;
+    }
     setSaving(true);
     try {
       const title = data.basics.fullName ? `${data.basics.fullName} — CV` : "Untitled CV";
