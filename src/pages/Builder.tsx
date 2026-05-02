@@ -464,6 +464,15 @@ const Builder = () => {
 
             <div className="mt-6 rounded-lg border border-subtle bg-surface p-6 md:p-8">
           {step === 0 && (
+            <>
+            {!initialId && !importDismissed && (
+              <div className="mb-6 md:col-span-2">
+                <CvImportBlock
+                  onExtracted={applyExtracted}
+                  onSkip={() => setImportDismissed(true)}
+                />
+              </div>
+            )}
             <div className="grid gap-5 md:grid-cols-2">
               <Field label="Full name *" id="fullName">
                 <Input
@@ -532,6 +541,7 @@ const Builder = () => {
                 </Field>
               </div>
             </div>
+            </>
           )}
 
           {step === 1 && (
