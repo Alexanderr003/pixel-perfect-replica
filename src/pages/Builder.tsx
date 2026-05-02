@@ -654,4 +654,20 @@ const Field = ({ label, id, children }: { label: string; id: string; children: R
   </div>
 );
 
+const AutoSaveIndicator = ({ status, at }: { status: "idle" | "saving" | "saved" | "error"; at: Date | null }) => {
+  if (status === "idle") return null;
+  const time = at ? at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+  let label = "";
+  let cls = "text-dim";
+  if (status === "saving") label = "Saving…";
+  else if (status === "saved") label = `Saved · ${time}`;
+  else if (status === "error") { label = "Save failed"; cls = "text-destructive"; }
+  return (
+    <span className={`hidden sm:inline text-xs uppercase tracking-widest ${cls}`}>
+      {status === "saving" && <Loader2 className="mr-1.5 inline h-3 w-3 animate-spin" />}
+      {label}
+    </span>
+  );
+};
+
 export default Builder;
