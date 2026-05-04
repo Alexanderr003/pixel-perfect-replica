@@ -8,6 +8,8 @@ import Pricing from "./pages/Pricing.tsx";
 import Templates from "./pages/Templates.tsx";
 import Auth from "./pages/Auth.tsx";
 import Builder from "./pages/Builder.tsx";
+import BuilderGenerating from "./pages/BuilderGenerating.tsx";
+import Editor from "./pages/Editor.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import CheckoutReturn from "./pages/CheckoutReturn.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -37,6 +39,22 @@ const App = () => (
                 element={
                   <RequireAuth>
                     <Builder />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/builder/generating"
+                element={
+                  <RequireAuth>
+                    <BuilderGenerating />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/editor"
+                element={
+                  <RequireAuth>
+                    <Editor />
                   </RequireAuth>
                 }
               />
