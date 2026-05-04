@@ -759,7 +759,7 @@ const Builder = () => {
               ) : (
                 <Button variant="gold" onClick={save} disabled={saving}>
                   {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {cvIdRef.current ? "Done" : "Save CV"}
+                  Generate with AI <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               )}
             </div>
