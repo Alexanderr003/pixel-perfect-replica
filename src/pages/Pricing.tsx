@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Check, Sparkles, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Nav } from "@/components/site/Nav";
 import { Footer } from "@/components/site/Footer";
 import { useAuth } from "@/components/site/AuthProvider";
@@ -103,6 +104,9 @@ const faqs = [
 const Pricing = () => {
   const [billing, setBilling] = useState<Billing>("monthly");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
   const items = plans(billing);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -141,6 +145,19 @@ const Pricing = () => {
     });
   };
 
+  const VALID_CODES = ["WELCOME20", "PROFILUM", "LAUNCH"];
+  const handleApplyPromo = () => {
+    const code = promoInput.trim().toUpperCase();
+    if (VALID_CODES.includes(code)) {
+      setAppliedPromo(code);
+      setPromoError(null);
+    } else {
+      setAppliedPromo(null);
+      setPromoError("Invalid code");
+      setTimeout(() => setPromoError(null), 2000);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <PaymentTestModeBanner />
@@ -174,6 +191,28 @@ const Pricing = () => {
               )}
             </button>
           ))}
+        </div>
+
+        {/* Promo code */}
+        <div className="mt-8 mx-auto max-w-md">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Promo code"
+              value={promoInput}
+              onChange={(e) => setPromoInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleApplyPromo(); }}
+              className="bg-surface border-subtle uppercase tracking-wider"
+            />
+            <Button variant="goldOutline" onClick={handleApplyPromo}>
+              Apply
+            </Button>
+          </div>
+          {appliedPromo && (
+            <p className="mt-2 text-sm text-green-500">✓ Code applied — 20% off</p>
+          )}
+          {promoError && (
+            <p className="mt-2 text-sm text-red-500">{promoError}</p>
+          )}
         </div>
       </section>
 
