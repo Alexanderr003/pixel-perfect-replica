@@ -1,5 +1,4 @@
 import mammoth from "npm:mammoth@1.8.0";
-import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +15,21 @@ const json = (status: number, body: unknown) =>
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5MB
 
+function extractTextFromPDF(buffer: Uint8Array): string {
+  const text = new TextDecoder("latin1").decode(buffer);
+  const matches = text.match(/BT[\s\S]*?ET/g) || [];
+  let result = "";
+  for (const block of matches) {
+    const strings = block.match(/\(([^)]+)\)/g) || [];
+    for (const s of strings) {
+      result += s.slice(1, -1) + " ";
+    }
+  }
+  const cleaned = result.trim();
+  if (cleaned.length >= 50) return cleaned;
+  return text.replace(/[^\x20-\x7E\n]/g, " ").replace(/\s+/g, " ").trim();
+}
+
 async function extractTextFromFile(file: File): Promise<string> {
   const name = (file.name || "").toLowerCase();
   const ab = await file.arrayBuffer();
@@ -29,10 +43,9 @@ async function extractTextFromFile(file: File): Promise<string> {
     return result.value ?? "";
   }
   if (name.endsWith(".pdf") || file.type === "application/pdf") {
-    const data = new Uint8Array(ab);
-    const pdf = await getDocumentProxy(data);
-    const { text } = await extractText(pdf, { mergePages: true });
-    return typeof text === "string" ? text : (text as string[]).join("\n");
+    const out = extractTextFromPDF(new Uint8Array(ab));
+    if (out.length < 50) throw new Error("pdf_extract_failed");
+    return out;
   }
   throw new Error("unsupported_format");
 }
@@ -41,7 +54,7 @@ async function callGeminiJson(system: string, user: string): Promise<string> {
   const key = Deno.env.get("GEMINI_API_KEY");
   if (!key) throw new Error("GEMINI_API_KEY not configured");
   const url =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" +
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" +
     encodeURIComponent(key);
 
   const res = await fetch(url, {
@@ -143,7 +156,10 @@ Deno.serve(async (req) => {
   } catch (e) {
     console.error("extract-cv error", e);
     const msg = e instanceof Error ? e.message : "unknown_error";
-    const status = msg === "file_too_large" ? 413 : msg === "unsupported_format" ? 415 : 500;
-    return json(status, { error: msg });
+    const status = msg === "file_too_large" ? 413 : msg === "unsupported_format" ? 415 : msg === "pdf_extract_failed" ? 422 : 500;
+    const errorMsg = msg === "pdf_extract_failed"
+      ? "Could not extract text from PDF. Please try DOCX or paste your CV as text."
+      : msg;
+    return json(status, { error: errorMsg });
   }
 });
