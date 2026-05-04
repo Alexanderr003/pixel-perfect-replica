@@ -112,20 +112,19 @@ const Landing = () => {
 
       {/* TEMPLATES PREVIEW */}
       <section className="container py-24 md:py-32 border-t border-subtle">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <div>
-            <span className="text-xs uppercase tracking-[0.25em] text-gold">The collection</span>
-            <h2 className="mt-4 font-serif text-4xl md:text-5xl">Twelve templates. One for every chapter.</h2>
-          </div>
-          <Link to="/templates" className="text-sm text-dim hover:text-gold transition-colors">
-            View all twelve →
-          </Link>
+        <div>
+          <span className="text-gold uppercase" style={{ fontSize: "10px", letterSpacing: "0.25em" }}>
+            Template collection · 2026
+          </span>
+          <h2 className="mt-4 font-serif text-4xl md:text-5xl">
+            12 designs. All <span className="italic text-gold">premium.</span>
+          </h2>
         </div>
 
         <div className="mt-16 grid gap-8 md:grid-cols-3">
           {templates.map((t) => (
             <div key={t.id} className="group">
-              <div className="relative overflow-hidden rounded-md border border-subtle bg-surface aspect-[3/4]">
+              <div className="relative overflow-hidden rounded-md border border-subtle bg-surface aspect-[3/4] shadow-sm">
                 <img
                   src={t.img}
                   alt={`${t.name} CV template`}
@@ -146,6 +145,12 @@ const Landing = () => {
               <p className="mt-1 text-sm text-dim">{t.desc}</p>
             </div>
           ))}
+        </div>
+
+        <div className="mt-12 flex justify-center">
+          <Button variant="goldOutline" size="lg" asChild>
+            <Link to="/templates">View all 12 templates →</Link>
+          </Button>
         </div>
       </section>
 
