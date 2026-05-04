@@ -1,9 +1,5 @@
 import mammoth from "npm:mammoth@1.8.0";
-import { getDocument, GlobalWorkerOptions } from "npm:pdfjs-dist@4.7.76/legacy/build/pdf.mjs";
-
-// pdfjs in Deno: disable worker
-// @ts-ignore
-GlobalWorkerOptions.workerSrc = "";
+import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,16 +30,9 @@ async function extractTextFromFile(file: File): Promise<string> {
   }
   if (name.endsWith(".pdf") || file.type === "application/pdf") {
     const data = new Uint8Array(ab);
-    // @ts-ignore
-    const pdf = await getDocument({ data, disableFontFace: true, useSystemFonts: false }).promise;
-    let out = "";
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      const strings = content.items.map((it: { str?: string }) => it.str ?? "");
-      out += strings.join(" ") + "\n";
-    }
-    return out;
+    const pdf = await getDocumentProxy(data);
+    const { text } = await extractText(pdf, { mergePages: true });
+    return typeof text === "string" ? text : (text as string[]).join("\n");
   }
   throw new Error("unsupported_format");
 }
