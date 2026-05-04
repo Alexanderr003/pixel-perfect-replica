@@ -180,7 +180,7 @@ const Templates = () => {
               </div>
               <p className="mt-1 text-sm text-dim">{t.desc}</p>
               <p className="mt-3 text-[11px] uppercase tracking-[0.18em] text-muted-soft">
-                Best for · <span className="text-dim normal-case tracking-normal">{t.best}</span>
+                BEST FOR: <span className="text-dim normal-case tracking-normal">{t.best}</span>
               </p>
 
               <div className="mt-5 flex items-center gap-3">
@@ -199,7 +199,7 @@ const Templates = () => {
                     onClick={() => { setUpgradeTpl(t.id); setUpgradeOpen(true); }}
                     className="text-xs text-dim hover:text-gold transition-colors"
                   >
-                    Own it · $12
+                    Own it — $12
                   </button>
                 )}
               </div>
