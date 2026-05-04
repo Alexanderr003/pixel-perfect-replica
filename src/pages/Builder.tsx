@@ -363,13 +363,17 @@ const Builder = () => {
       if (cvIdRef.current) {
         const { error } = await supabase.from("cvs").update(payload).eq("id", cvIdRef.current);
         if (error) throw error;
-        toast.success("CV updated.");
       } else {
-        const { error } = await supabase.from("cvs").insert([payload]);
+        const { data: inserted, error } = await supabase
+          .from("cvs")
+          .insert([payload])
+          .select("id")
+          .single();
         if (error) throw error;
-        toast.success("CV saved.");
+        cvIdRef.current = inserted.id;
       }
-      navigate("/dashboard");
+      if (!cvIdRef.current) throw new Error("Missing CV id after save");
+      navigate(`/builder/generating?id=${cvIdRef.current}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save");
     } finally {
@@ -755,7 +759,7 @@ const Builder = () => {
               ) : (
                 <Button variant="gold" onClick={save} disabled={saving}>
                   {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {cvIdRef.current ? "Done" : "Save CV"}
+                  Generate with AI <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               )}
             </div>
