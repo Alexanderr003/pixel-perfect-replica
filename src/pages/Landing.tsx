@@ -38,7 +38,7 @@ const Landing = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/60 to-background" />
         <div className="container relative pt-28 pb-32 md:pt-40 md:pb-48">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-4 py-1.5 text-xs uppercase tracking-[0.2em] text-gold">
+            <div className="inline-flex items-center gap-2 rounded-sm border border-gold/30 bg-gold/5 px-4 py-1.5 text-xs uppercase tracking-[0.2em] text-gold">
               <Sparkles className="h-3 w-3" />
               Powered by AI
             </div>
