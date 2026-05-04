@@ -217,6 +217,12 @@ const Landing = () => {
             </div>
           ))}
         </div>
+
+        <div className="mt-12 flex justify-center">
+          <Button variant="goldOutline" size="lg" asChild>
+            <Link to="/pricing">See all plans →</Link>
+          </Button>
+        </div>
       </section>
 
       {/* TESTIMONIAL / CLOSING */}
@@ -236,13 +242,22 @@ const Landing = () => {
           </div>
         </div>
 
-        <div className="mt-24 rounded-md border border-gold/30 bg-surface p-12 md:p-16 text-center glow-gold">
-          <h2 className="font-serif text-4xl md:text-5xl">Begin your next chapter.</h2>
-          <p className="mt-4 text-dim max-w-md mx-auto">
-            $2 for your first CV. No subscription. No credit card surprises.
+      </section>
+
+      {/* FINAL CTA */}
+      <section className="relative overflow-hidden border-t border-subtle bg-background">
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-surface/40 to-background" />
+        <div className="container relative py-32 md:py-40 text-center">
+          <h2 className="font-serif text-5xl md:text-6xl lg:text-7xl leading-[1.05]">
+            Your best version <span className="italic text-gradient-gold">starts here.</span>
+          </h2>
+          <p className="mt-6 text-lg text-dim max-w-xl mx-auto">
+            Join thousands of professionals who chose quality without compromise.
           </p>
           <Button variant="hero" size="xl" className="mt-10" asChild>
-            <Link to="/builder">Build my CV <ArrowRight className="ml-1" /></Link>
+            <Link to="/builder">
+              Build my profile — from $2 <ArrowRight className="ml-1" />
+            </Link>
           </Button>
         </div>
       </section>
