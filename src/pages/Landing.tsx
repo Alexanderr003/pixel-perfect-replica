@@ -15,7 +15,7 @@ const templates = [
 ];
 
 const plans = [
-  { name: "Starter", price: "$1.99", sub: "one-time", features: ["1 CV", "4 Core templates", "PDF download"], cta: "Get started" },
+  { name: "Starter", price: "$2", sub: "one-time", features: ["1 CV", "4 Core templates", "PDF download"], cta: "Get started" },
   { name: "Pro", price: "$9", sub: "per month", features: ["Unlimited CVs", "9 templates", "Cover letter & LinkedIn bio", "Job match dashboard"], cta: "Go Pro", featured: true },
   { name: "Elite", price: "$19", sub: "per month", features: ["Everything in Pro", "All 12 templates", "AI headshot", "Priority support"], cta: "Go Elite" },
   { name: "Own a template", price: "$12", sub: "one-time", features: ["1 template forever", "Unlimited uses", "All future updates"], cta: "Buy template" },
