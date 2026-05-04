@@ -681,7 +681,7 @@ const Builder = () => {
                         key={s}
                         type="button"
                         onClick={() => setData({ ...data, skills: data.skills.filter((x) => x !== s) })}
-                        className="group rounded-full border border-subtle bg-surface-2 px-3 py-1 text-xs text-foreground hover:border-gold"
+                        className="group rounded-sm border border-subtle bg-surface-2 px-3 py-1 text-xs text-foreground hover:border-gold"
                       >
                         {s} <span className="ml-1 text-dim group-hover:text-gold">×</span>
                       </button>

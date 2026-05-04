@@ -100,7 +100,7 @@ const Templates = () => {
               <button
                 key={f}
                 onClick={() => setActive(f)}
-                className={`group inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs uppercase tracking-[0.2em] transition-colors ${
+                className={`group inline-flex items-center gap-2 rounded-sm border px-4 py-1.5 text-xs uppercase tracking-[0.2em] transition-colors ${
                   active === f
                     ? "border-gold bg-gold text-background"
                     : "border-subtle text-dim hover:border-gold/50 hover:text-foreground"

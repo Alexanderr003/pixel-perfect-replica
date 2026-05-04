@@ -6,8 +6,8 @@ export const Footer = () => {
       <div className="container py-16">
         <div className="grid gap-12 md:grid-cols-4">
           <div className="md:col-span-2">
-            <span className="font-serif text-2xl">
-              Profilum<span className="text-gold">.</span>
+            <span className="font-serif text-2xl tracking-[0.2em] text-foreground">
+              <span className="text-gold">P.</span>ROFILUM
             </span>
             <p className="mt-4 max-w-sm text-sm text-dim leading-relaxed">
               Your professional identity, elevated by AI. Premium CVs that open doors.
