@@ -15,7 +15,7 @@ const templates = [
 ];
 
 const plans = [
-  { name: "Starter", price: "$1.99", sub: "one-time", features: ["1 CV", "4 Core templates", "PDF download"], cta: "Get started" },
+  { name: "Starter", price: "$2", sub: "one-time", features: ["1 CV", "4 Core templates", "PDF download"], cta: "Get started" },
   { name: "Pro", price: "$9", sub: "per month", features: ["Unlimited CVs", "9 templates", "Cover letter & LinkedIn bio", "Job match dashboard"], cta: "Go Pro", featured: true },
   { name: "Elite", price: "$19", sub: "per month", features: ["Everything in Pro", "All 12 templates", "AI headshot", "Priority support"], cta: "Go Elite" },
   { name: "Own a template", price: "$12", sub: "one-time", features: ["1 template forever", "Unlimited uses", "All future updates"], cta: "Buy template" },
@@ -40,7 +40,7 @@ const Landing = () => {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-4 py-1.5 text-xs uppercase tracking-[0.2em] text-gold">
               <Sparkles className="h-3 w-3" />
-              Powered by Claude AI
+              Powered by AI
             </div>
             <h1 className="mt-8 font-serif text-5xl leading-[1.05] tracking-tight md:text-7xl lg:text-8xl">
               Your profile.
@@ -48,13 +48,13 @@ const Landing = () => {
               <span className="text-gradient-gold italic">Elevated.</span>
             </h1>
             <p className="mt-8 max-w-xl text-lg leading-relaxed text-dim md:text-xl">
-              Profilum turns your story into a CV that opens doors. Twelve premium
-              templates. Words written by AI. Polished in minutes.
+              AI reads your experience and writes your CV. Twelve premium
+              templates. ATS-optimised. Polished in minutes.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <Button variant="hero" size="xl" asChild>
                 <Link to="/builder">
-                  Build my CV — from $1.99 <ArrowRight className="ml-1" />
+                  Build my CV — from $2 <ArrowRight className="ml-1" />
                 </Link>
               </Button>
               <Button variant="ghost" size="xl" className="text-dim" asChild>
@@ -84,7 +84,7 @@ const Landing = () => {
             From a draft to a definitive statement.
           </h2>
           <p className="mt-4 text-dim">
-            Claude rewrites your raw experience into impact-driven language tuned to
+            Our AI rewrites your raw experience into impact-driven language tuned to
             your target role and industry.
           </p>
         </div>
@@ -99,7 +99,7 @@ const Landing = () => {
           </div>
           <div className="rounded-md border border-gold/30 bg-surface p-8 glow-gold">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-gold">
-              <Sparkles className="h-3 w-3" /> After — by Claude
+              <Sparkles className="h-3 w-3" /> After — by AI
             </div>
             <ul className="mt-6 space-y-3 text-foreground/90 leading-relaxed">
               <li>• Led 14 multi-channel campaigns generating $2.3M in attributed pipeline.</li>
@@ -154,7 +154,7 @@ const Landing = () => {
         <div className="grid gap-12 md:grid-cols-3">
           {[
             { icon: FileText, title: "Import in one click", body: "Drop a PDF or DOCX. We extract everything and pre-fill your form." },
-            { icon: Sparkles, title: "Written by Claude", body: "Quantified bullets, ATS keywords, cover letter and LinkedIn bio." },
+            { icon: Sparkles, title: "Written by AI", body: "Quantified bullets, ATS keywords, cover letter and LinkedIn bio." },
             { icon: Zap, title: "PDF in seconds", body: "Pixel-perfect, A4, embedded fonts. Ready for the recruiter inbox." },
           ].map((f) => (
             <div key={f.title}>
@@ -171,7 +171,7 @@ const Landing = () => {
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs uppercase tracking-[0.25em] text-gold">Pricing</span>
           <h2 className="mt-4 font-serif text-4xl md:text-5xl">Pay for what you actually need.</h2>
-          <p className="mt-4 text-dim">Start at $1.99. Own a template forever for twelve. Or go unlimited.</p>
+          <p className="mt-4 text-dim">Start at $2. Own a template forever for $12. Or go unlimited.</p>
         </div>
 
         <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -234,7 +234,7 @@ const Landing = () => {
         <div className="mt-24 rounded-md border border-gold/30 bg-surface p-12 md:p-16 text-center glow-gold">
           <h2 className="font-serif text-4xl md:text-5xl">Begin your next chapter.</h2>
           <p className="mt-4 text-dim max-w-md mx-auto">
-            $1.99 for your first CV. No subscription. No credit card surprises.
+            $2 for your first CV. No subscription. No credit card surprises.
           </p>
           <Button variant="hero" size="xl" className="mt-10" asChild>
             <Link to="/builder">Build my CV <ArrowRight className="ml-1" /></Link>

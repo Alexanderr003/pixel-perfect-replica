@@ -88,7 +88,7 @@ const Templates = () => {
         </h1>
         <p className="mt-5 mx-auto max-w-xl text-dim">
           Every template is hand-tuned for typographic balance, ATS parsing and
-          on-screen elegance. Choose one — or own it forever for $4.99.
+          on-screen elegance. Choose one — or own it forever for $12.
         </p>
       </section>
 
@@ -199,7 +199,7 @@ const Templates = () => {
                     onClick={() => { setUpgradeTpl(t.id); setUpgradeOpen(true); }}
                     className="text-xs text-dim hover:text-gold transition-colors"
                   >
-                    Own it · $4.99
+                    Own it · $12
                   </button>
                 )}
               </div>
@@ -240,17 +240,17 @@ const Templates = () => {
       <section className="container pb-32">
         <div className="rounded-md border border-gold/30 bg-surface p-12 md:p-16 text-center glow-gold">
           <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-gold">
-            <Sparkles className="h-3 w-3" /> Powered by Claude AI
+            <Sparkles className="h-3 w-3" /> Powered by AI
           </div>
           <h2 className="mt-5 font-serif text-4xl md:text-5xl">
             Pick a template. We'll write the words.
           </h2>
           <p className="mt-4 text-dim max-w-md mx-auto">
-            Drop your old CV or start blank. Claude rewrites every bullet into
+            Drop your old CV or start blank. Our AI rewrites every bullet into
             quantified, ATS-optimised impact.
           </p>
           <Button variant="hero" size="xl" className="mt-10" asChild>
-            <Link to="/builder">Start from $1.99 <ArrowRight className="ml-1" /></Link>
+            <Link to="/builder">Start from $2 <ArrowRight className="ml-1" /></Link>
           </Button>
         </div>
       </section>

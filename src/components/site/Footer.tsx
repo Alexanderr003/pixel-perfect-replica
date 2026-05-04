@@ -32,7 +32,7 @@ export const Footer = () => {
         </div>
         <div className="mt-12 pt-8 border-t border-subtle flex flex-col gap-3 md:flex-row md:justify-between text-xs text-muted-soft">
           <span>© 2026 Profilum. Crafted with intention.</span>
-          <span>Powered by Claude AI</span>
+          <span>Powered by AI</span>
         </div>
       </div>
     </footer>
