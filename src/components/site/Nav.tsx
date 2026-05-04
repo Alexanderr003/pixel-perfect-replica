@@ -23,8 +23,8 @@ export const Nav = () => {
     <header className="sticky top-0 z-50 border-b border-subtle bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <span className="font-serif text-2xl tracking-tight text-foreground">
-            Profilum<span className="text-gold">.</span>
+          <span className="font-serif text-2xl tracking-[0.2em] text-foreground">
+            <span className="text-gold">P.</span>ROFILUM
           </span>
         </Link>
         <nav className="hidden items-center gap-8 md:flex">
